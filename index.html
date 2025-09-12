@@ -3,22 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>問題トレーナー</title>
+<title>問題トレーナー（questions.json対応）</title>
 <style>
-:root { --ok:#2e7d32; --ng:#c62828; --muted:#666; }
-body { margin: 24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; }
+:root { --ok:#2e7d32; --ng:#c62828; --muted:#666; --ink:#222; --chip:#eef; --chipfg:#225; }
+*{box-sizing:border-box}
+body { margin: 24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; color:var(--ink) }
 header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
 h1 { font-size:1.25rem; margin:0; }
-.pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef; color:#225; font-size:.8rem; margin-left:8px; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; background:var(--chip); color:var(--chipfg); font-size:.8rem; margin-left:8px; }
 #settings { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin: 8px 0 16px; }
 #settings label { font-size:.9rem; color:#333; display:flex; flex-direction:column; gap:4px; }
 #settings input[type="number"]{ width:7em; }
 #question-body { padding: 16px; background:#fafafa; border:1px solid #eee; border-radius:8px; line-height:1.9; }
-.blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; }
+.blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; min-width:10em }
 .bank { margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; }
-.bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; }
+.bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; background:#fff }
 .choices { margin-top: 12px; display:grid; gap:8px; }
-.choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; }
+.choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; background:#fff }
 .controls { margin-top: 16px; display:flex; gap:8px; flex-wrap:wrap; }
 button { padding:8px 12px; font-size:1rem; cursor:pointer; }
 #meta { color: var(--muted); font-size:.9rem; margin-left: 8px; }
@@ -33,6 +34,7 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
 #final h2 { margin: 0 0 8px; font-size:1.1rem; }
 #final ul { padding-left: 1.25rem; }
 #alert { margin-left: 8px; color: #b71c1c; font-weight: 600; }
+small.muted{ color:var(--muted) }
 </style>
 </head>
 <body>
@@ -40,7 +42,7 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
   <h1>問題トレーナー</h1>
   <span id="meta"></span>
   <span id="alert"></span>
-  <label class="pill">JSON読込 <input type="file" id="file" accept="application/json" style="display:none"></label>
+  <span class="pill">データ: <b>questions.json</b> を自動読込</span>
 </header>
 
 <section id="settings">
@@ -50,7 +52,7 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
     </select>
   </label>
   <label>問題数
-    <input type="number" id="countInput" min="1" value="10">
+    <input type="number" id="countInput" min="1" value="20">
   </label>
   <label><input type="checkbox" id="shuffle" checked> ランダム</label>
   <button id="startBtn">この設定で開始</button>
@@ -58,7 +60,7 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
 </section>
 
 <main>
-  <div id="question-body"></div>
+  <div id="question-body"><small class="muted">questions.json の読み込みを待機中…</small></div>
   <div id="extras"></div>
   <div id="result"></div>
 
@@ -85,17 +87,103 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
   let IDX = 0, correctCount = 0, attempted = 0;
   let history = [];
 
-  function normalizeForm(s){const m={'穴埋め':'fill','fill':'fill','〇×':'truefalse','○×':'truefalse','truefalse':'truefalse','並べ替え':'order','並べ替え問題':'order','order':'order','５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq','書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'};return m[s]||s;}
-  function normalizeQuestions(arr){return arr.map(q=>{const out={...q}; out.形式=normalizeForm(out.形式); if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){ out.選択肢=['〇','×']; } if(out.形式==='fill'){ if(Array.isArray(out.答え)){} else if(typeof out.答え==='string' && out.答え.trim()){ out.答え=[out.答え.trim()]; } else { out.答え=[]; } } if(!out.科目 || (typeof out.科目==='string' && out.科目.trim()==='')){ out.科目 = '未分類'; } return out; });}
-  function norm(s){return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}
-  function countBlanks(text, answer){const m=(String(text||'').match(/（　　　）/g)||[]).length; if(m>0) return m; if(Array.isArray(answer)) return answer.length||1; return 1;}
+  /* ====== 正規化・ユーティリティ ====== */
+  const FORM_MAP = {
+    '穴埋め':'fill','fill':'fill',
+    '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
+    '並べ替え':'order','並べ替え問題':'order','order':'order',
+    '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
+    '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'
+  };
+  function normalizeForm(s){ return FORM_MAP[s] || s; }
 
-  function buildSubjects(){ const subs=[...new Set(ALL.map(q=> (q.科目 && String(q.科目).trim()) ? String(q.科目).trim() : '未分類'))].sort(); const sel=document.getElementById('subjectSelect'); sel.innerHTML = '<option value="">すべて</option>' + subs.map(s=>`<option value="${s}">${s}</option>`).join(''); }
+  function tryParseJsonStringMaybeArray(x){
+    // some data has '["〇","×"]' as a string; parse safely
+    if (typeof x === 'string'){
+      const t = x.trim();
+      if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('{') && t.endsWith('}'))){
+        try{ return JSON.parse(t); }catch(e){ return x; }
+      }
+      // also allow "['a','b']" → convert to JSON-ish
+      if (t.startsWith("['") || t.startsWith('["')){
+        try{
+          const j = t.replace(/'/g, '"');
+          return JSON.parse(j);
+        }catch(e){ return x; }
+      }
+    }
+    return x;
+  }
+
+  function normalizeQuestions(arr){
+    return arr.map(q=>{
+      const out = { ...q };
+      out.形式 = normalizeForm(String(out.形式||'').trim());
+      // normalize 選択肢：stringified array → array
+      if ('選択肢' in out){
+        const parsed = tryParseJsonStringMaybeArray(out.選択肢);
+        out.選択肢 = parsed;
+        // some data has ["[\"〇\", \"×\"]"] (array with one JSON-string)
+        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
+          const p2 = tryParseJsonStringMaybeArray(out.選択肢[0]);
+          if (Array.isArray(p2)) out.選択肢 = p2;
+        }
+      }
+      // truefalse: default choices
+      if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
+        out.選択肢 = ['〇','×'];
+      }
+      // order: 答えや選択肢が文字列化JSONのことがある
+      if(out.形式==='order'){
+        out.答え = tryParseJsonStringMaybeArray(out.答え);
+        out.選択肢 = tryParseJsonStringMaybeArray(out.選択肢);
+        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
+          const p = tryParseJsonStringMaybeArray(out.選択肢[0]);
+          if (Array.isArray(p)) out.選択肢 = p;
+        }
+      }
+      // fill: 答えは配列に
+      if(out.形式==='fill'){
+        if(Array.isArray(out.答え)){
+          // ok
+        }else if(typeof out.答え==='string' && out.答え.trim()){
+          // "A / B / C" で分割、改行も区切りとして解釈
+          const parts = out.答え.split(/\s*\/\s*|\n/).map(s=>s.trim()).filter(Boolean);
+          out.答え = parts.length>1 ? parts : [out.答え.trim()];
+        }else{
+          out.答え = [];
+        }
+      }
+      // 科目欠落補正
+      if(!out.科目 || (typeof out.科目==='string' && out.科目.trim()==='')) out.科目 = '未分類';
+      return out;
+    });
+  }
+
+  function norm(s){return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}
+  function countBlanks(text, answer){
+    const m=(String(text||'').match(/（　　　）/g)||[]).length;
+    if(m>0) return m;
+    if(Array.isArray(answer)) return answer.length||1;
+    return 1;
+  }
+
+  function buildSubjects(){
+    const subs=[...new Set(ALL.map(q=> (q.科目 && String(q.科目).trim()) ? String(q.科目).trim() : '未分類'))].sort();
+    const sel=document.getElementById('subjectSelect');
+    sel.innerHTML = '<option value=\"\">すべて</option>' + subs.map(s=>`<option value=\"${s}\">${s}</option>`).join('');
+  }
 
   function setProgress(){document.getElementById('progress').textContent = QUESTIONS.length? `Q ${IDX+1} / ${QUESTIONS.length}` : '';}
   function setMeta(q){document.getElementById('meta').textContent = `${q.id||''} ${q.科目? ' / '+q.科目 : ''}`; }
-  function updateScoreboard(){const total = attempted; const rate = total? Math.round(100*correctCount/total):0; document.getElementById('scoreText').textContent = `${correctCount} / ${total}`; document.getElementById('scoreRate').textContent = rate + '%'; document.getElementById('scoreFill').style.width = rate + '%';}
+  function updateScoreboard(){
+    const total = attempted; const rate = total? Math.round(100*correctCount/total):0;
+    document.getElementById('scoreText').textContent = `${correctCount} / ${total}`;
+    document.getElementById('scoreRate').textContent = rate + '%';
+    document.getElementById('scoreFill').style.width = rate + '%';
+  }
 
+  /* ====== レンダリング ====== */
   function renderFill(q){
     const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
     body.innerHTML=extras.innerHTML=result.innerHTML='';
@@ -110,7 +198,7 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
         let el;
         if(isPerBlankChoices){ el=document.createElement('select'); (choices[i]||[]).forEach(opt=>{const o=document.createElement('option'); o.value=String(opt); o.textContent=String(opt); el.appendChild(o);}); }
         else { el=document.createElement('input'); el.type='text'; el.placeholder=`空欄${i+1}`; el.autocomplete='off'; }
-        el.className='blank-input'; el.dataset.blankIndex=i; el.style.minWidth='10em'; body.append(el);
+        el.className='blank-input'; el.dataset.blankIndex=i; body.append(el);
       }
     }
     if(isBank){
@@ -130,6 +218,7 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
     setMeta(q);
   }
   function renderTF(q){ renderMCQ(q); }
+
   function renderShort(q){
     const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
     body.innerHTML=extras.innerHTML=result.innerHTML='';
@@ -137,15 +226,25 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
     const el=document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer'; el.placeholder='ここに解答を入力'; body.append(el);
     setMeta(q);
   }
+
   function renderOrder(q){
     const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
     body.innerHTML=extras.innerHTML=result.innerHTML='';
     const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
-    const items=(q.選択肢||[]).slice();
-    for(let i=items.length-1;i>0;i++){const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]];}
-    const ul=document.createElement('ol'); ul.id='order-list'; items.forEach(x=>{const li=document.createElement('li'); li.textContent=String(x); ul.append(li);});
+    // 選択肢候補
+    let items = Array.isArray(q.選択肢) ? q.選択肢.slice() : (Array.isArray(q.答え)? q.答え.slice(): []);
+    for(let i=items.length-1;i>0;i++){const j=Math.random()* (i+1) |0; [items[i],items[j]]=[items[j],items[i]];}
+    const ul=document.createElement('ol'); ul.id='order-list';
+    items.forEach(x=>{
+      const li=document.createElement('li'); li.textContent=String(x);
+      const btns=document.createElement('span'); btns.style.marginLeft='8px';
+      const up=document.createElement('button'); up.type='button'; up.textContent='↑'; up.onclick=()=>{ if(li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling); };
+      const dn=document.createElement('button'); dn.type='button'; dn.textContent='↓'; dn.onclick=()=>{ if(li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li); };
+      btns.append(up, dn); li.append(btns); ul.append(li);
+    });
     body.append(ul); setMeta(q);
   }
+
   function renderQuestion(q){
     setProgress();
     if(q.形式==='fill') return renderFill(q);
@@ -156,13 +255,27 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
     document.getElementById('question-body').textContent=q.問題文||'';
   }
 
-  function isCorrectForBlank(user, spec){ if(Array.isArray(spec)) return spec.some(a=>norm(a)===norm(user)); return norm(spec)===norm(user); }
+  /* ====== 採点 ====== */
+  function isCorrectForBlank(user, spec){
+    // spec が配列なら OR、文字列なら完全一致（正規化）
+    if(Array.isArray(spec)) return spec.some(a=>norm(a)===norm(user));
+    // "A / B" を OR と見なす（データゆらぎ対策）
+    if(typeof spec==='string' && spec.includes(' / ')){
+      return spec.split(' / ').some(a=>norm(a)===norm(user));
+    }
+    return norm(spec)===norm(user);
+  }
+
   function gradeFill(q){
     const n=countBlanks(q.問題文||'', q.答え);
     const inputs=Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex)-(+b.dataset.blankIndex));
     const user=inputs.map(el=>('value' in el)? el.value : el.options[el.selectedIndex]?.value ?? '');
     const ans=Array.isArray(q.答え)? q.答え : [q.答え??''];
-    const per=[]; for(let i=0;i<n;i++){ per[i]=isCorrectForBlank(user[i], ans[i]??''); inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336'; }
+    const per=[]; for(let i=0;i<n;i++){
+      const spec = ans[i]??'';
+      per[i]=isCorrectForBlank(user[i], spec);
+      inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336';
+    }
     const correct=per.every(Boolean);
     const res=document.getElementById('result');
     const answerView = ans.map((a,i)=> Array.isArray(a)? `(${i+1}) ${a.join(' / ')}` : `(${i+1}) ${a??''}`).join('　');
@@ -170,25 +283,33 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
     res.textContent = (correct? '正解！' : '不正解…') + (answerView? `　正解：${answerView}` : '');
     return { correct, user, answer: ans, per };
   }
+
   function gradeMCQ(q){
     const checked=document.querySelector('input[name="mcq"]:checked');
     const ok=checked && norm(checked.value)===norm(q.答え);
     const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　正解：${q.答え}` : '');
     return { correct: !!ok, user: checked? checked.value : '', answer: q.答え };
   }
+
   function gradeShort(q){
     const v=document.getElementById('short-answer')?.value||'';
-    const ans=Array.isArray(q.答え)? q.答え.map(norm) : [norm(q.答え||'')];
-    const ok=ans.some(a=>a===norm(v));
+    // 短答は配列なら OR、文字列なら完全一致（正規化）
+    const ansArr = Array.isArray(q.答え) ? q.答え : (typeof q.答え==='string' ? q.答え.split(/\s*\/\s*|\n/).filter(Boolean) : []);
+    const ok = ansArr.length ? ansArr.some(a=>norm(a)===norm(v)) : norm(v)===norm(q.答え||'');
     const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　模範解答：${Array.isArray(q.答え)? q.答え.join(' / ') : q.答え}` : '');
     return { correct: ok, user: v, answer: q.答え };
   }
+
   function gradeOrder(q){
     const lis=Array.from(document.querySelectorAll('#order-list li'));
-    const userSeq=lis.map(li=>li.textContent.trim());
+    const userSeq=lis.map(li=>li.childNodes[0].textContent.trim()); // exclude buttons text
     let ansSeq=[];
     if(Array.isArray(q.答え)) ansSeq=q.答え.map(String);
-    else if(typeof q.答え==='string') ansSeq=q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
+    else if(typeof q.答え==='string'){
+      const parsed = tryParseJsonStringMaybeArray(q.答え);
+      if (Array.isArray(parsed)) ansSeq = parsed.map(String);
+      else ansSeq=q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
+    }
     const ok=ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
     const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (ansSeq.length? `　正解順：${ansSeq.join(' → ')}` : '');
     return { correct: ok, user: userSeq, answer: ansSeq };
@@ -206,13 +327,14 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
     history.push({ id:q.id, correct:g.correct, user:g.user, answer:g.answer, subject:q.科目, form:q.形式 });
   }
 
+  /* ====== フロー制御 ====== */
   function show(i){ IDX=i; const q=QUESTIONS[IDX]; renderQuestion(q); }
   function startQuiz(){
     const sel = document.getElementById('subjectSelect').value;
-    const count = Math.max(1, parseInt(document.getElementById('countInput').value||'10',10));
-    const shuffle = document.getElementById('shuffle').checked;
+    const count = Math.max(1, parseInt(document.getElementById('countInput').value||'20',10));
+    const doShuffle = document.getElementById('shuffle').checked;
     let pool = ALL.filter(q=> !sel || (q.科目===sel));
-    if (shuffle) pool = pool.sort(()=>Math.random()-0.5);
+    if (doShuffle) pool = pool.sort(()=>Math.random()-0.5);
     QUESTIONS = pool.slice(0, count);
     IDX=0; correctCount=0; attempted=0; history=[];
     updateScoreboard(); setProgress();
@@ -245,45 +367,35 @@ button { padding:8px 12px; font-size:1rem; cursor:pointer; }
   document.getElementById('submit').onclick = gradeCurrent;
   document.getElementById('next').onclick = () => { if (IDX+1 < QUESTIONS.length) { show(IDX+1); } else { finish(); } };
 
-  document.getElementById('file').onchange = async (e) => {
-    const f = e.target.files[0];
-    const txt = await f.text();
-    const data = JSON.parse(txt);
-    ALL = normalizeQuestions(data);
-    buildSubjects();
-    document.getElementById('progress').textContent = '読込完了。設定を選んで開始してください。';
-    document.getElementById('alert').textContent = '';
-  };
-
-  async function loadDefault(){
-    const base = location.pathname.replace(/[^/]+$/, '');
-    const cand = [
-      base + 'data/questions.json',
-      base + '../data/questions.json',
-      base + 'questions.json',
-      'data/questions.json',
-      'questions.json'
-    ];
-    for (const u of cand){
-      try{
-        const r = await fetch(u, {cache:'no-store'});
-        if(r.ok){
-          console.log('Loaded:', u);
-          const data = await r.json();
-          return data;
-        }
-      }catch(e){ console.warn('Fetch failed for', u, e); }
+  /* ====== データロード（questions.json） ====== */
+  async function loadQuestionsJson(){
+    const url = 'questions.json'; // 同階層想定
+    try{
+      const r = await fetch(url, {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      return data;
+    }catch(e){
+      // 代替候補（/data/ も試す）
+      const alt = ['data/questions.json','./data/questions.json','./questions.json'];
+      for(const u of alt){
+        try{
+          const r2 = await fetch(u, {cache:'no-store'});
+          if(r2.ok){ return await r2.json(); }
+        }catch(_){}
+      }
+      throw e;
     }
-    throw new Error('questions.json not found in common locations.');
   }
 
-  loadDefault().then(data=>{
+  loadQuestionsJson().then(data=>{
     ALL = normalizeQuestions(data);
     buildSubjects();
-    document.getElementById('progress').textContent = 'データ読込済み。設定を選んで開始してください。';
+    document.getElementById('question-body').innerHTML = '<small class="muted">データ読込済み。設定を選んで開始してください。</small>';
   }).catch(err=>{
     console.error(err);
-    document.getElementById('alert').textContent = 'JSONが読み込めません。上の「JSON読込」でファイルを選んでください。';
+    document.getElementById('alert').textContent = 'questions.json が読み込めません。ファイルの配置を確認してください。';
+    document.getElementById('question-body').textContent='';
   });
 </script>
 </body>
