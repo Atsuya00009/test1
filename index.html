@@ -3,283 +3,357 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>問題トレーナー（最適化版）</title>
+<title>問題トレーナー（設定・採点付き）</title>
 <style>
-  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif; margin: 24px; }
-  header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
-  h1 { font-size: 1.25rem; margin:0; }
-  #meta { color:#666; font-size:.9rem; }
-  #question-body { padding: 16px; background:#fafafa; border:1px solid #eee; border-radius:8px; line-height:1.9; }
-  .blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; }
-  .choices { margin-top: 12px; display: grid; gap: 8px; }
-  .choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; }
-  .controls { margin-top: 16px; display:flex; gap:8px; flex-wrap:wrap; }
-  button { padding:8px 12px; font-size:1rem; cursor:pointer; }
-  #result { margin-top: 12px; font-weight:600; }
-  .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef; color:#225; font-size:.8rem; margin-left:8px; }
-  .bank { margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; }
-  .bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; }
+:root{
+    --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb;
+    --accent:#22d3ee; --ok:#22c55e; --ng:#ef4444; --warn:#f59e0b; --chip:#1f2937;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0b1220,#0f172a 30%,#0b1220);
+       color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  header{padding:16px 20px;border-bottom:1px solid #1f2937;position:sticky;top:0;background:#0f172a99;backdrop-filter: blur(6px); z-index:10}
+  header h1{margin:0;font-size:18px;letter-spacing:.5px}
+  main{max-width:980px;margin:18px auto;padding:0 12px 96px} /* bottom padding for footer height */
+  .grid{display:grid;gap:12px}
+  @media(min-width:900px){.grid{grid-template-columns: 300px 1fr}}
+  .card{background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:14px}
+  .card h2{margin:2px 0 10px;font-size:15px;color:#cbd5e1}
+  label{display:block;margin:.25rem 0 .1rem;color:#cbd5e1;font-size:13px}
+  select,input[type="number"],input[type="text"],textarea{
+    width:100%;background:#0b1220;color:var(--text);border:1px solid #263245;border-radius:10px;
+    padding:10px 12px;outline:none
+  }
+  input[type="file"]{width:100%}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row > *{flex:1}
+  button{
+    background:#0b1220;border:1px solid #2b3b4f;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer
+  }
+  button.primary{background:var(--accent);color:#002b36;border:none;font-weight:700}
+  button.ghost{background:transparent;border:1px dashed #2b3b4f}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chip{background:var(--chip);border:1px solid #2b3b4f;border-radius:999px;padding:2px 10px;font-size:12px;white-space:nowrap}
+  .muted{color:var(--muted);font-size:13px}
+  .stat{display:flex;gap:12px;flex-wrap:wrap}
+  .stat div{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:8px 10px}
+  .qwrap{display:flex;gap:14px;flex-direction:column}
+  .qtitle{font-size:18px;font-weight:700;margin:0}
+  .options{display:flex;flex-direction:column;gap:8px}
+  .opt{border:1px solid #263245;border-radius:10px;padding:10px;cursor:pointer;background:#0b1220; display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .opt input{margin-right:8px}
+  .opt.correct{border-color:var(--ok);background:#052e1b}
+  .opt.incorrect{border-color:var(--ng);background:#3a1217}
+  .answer-area{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .answer-area input[type="text"]{flex:1}
+  .result{padding:10px;border-radius:10px}
+  .ok{background:#052e1b;border:1px solid var(--ok)}
+  .ng{background:#3a1217;border:1px solid var(--ng)}
+  .explain{background:#0b1220;border:1px solid #263245;border-radius:10px;padding:10px}
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;background:#0b1220;border:1px solid #263245;border-radius:6px;padding:2px 6px}
+  .flex{display:flex;gap:10px;flex-wrap:wrap}
+  .space{height:8px}
+  footer{position:fixed;left:0;right:0;bottom:0;padding:10px 14px;background:#0b1220;border-top:1px solid #1f2937; z-index:20}
+  .right{margin-left:auto}
+  .warn{color:#fbbf24}
+  a.link{color:#7dd3fc;text-decoration:none}
+
+  /* ====== モバイル最適化 ====== */
+  @media (max-width: 640px){
+    header{position:sticky; top:0}
+    footer{position:static}             /* フッターを固定しない */
+    main{padding-bottom:16px}           /* 下の余白を減らす */
+    .right{display:none}                /* 右側の情報チップを隠す（Hostedなど） */
+    .card:first-child{position:relative}
+    /* オプション・進捗カードを折りたたみやすくするため余白縮小 */
+    .card{padding:12px}
+    .opt{flex-wrap:wrap}
+  }
+
+
+/* --- Add-on styles for settings & scoring --- */
+:root { --ok:#2e7d32; --ng:#c62828; --muted:#666; }
+body { margin: 24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; }
+header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
+h1 { font-size:1.25rem; margin:0; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef; color:#225; font-size:.8rem; margin-left:8px; }
+#settings { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin: 8px 0 16px; }
+#settings label { font-size:.9rem; color:#333; display:flex; flex-direction:column; gap:4px; }
+#settings input[type="number"]{ width:7em; }
+#question-body { padding: 16px; background:#fafafa; border:1px solid #eee; border-radius:8px; line-height:1.9; }
+.blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; }
+.bank { margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; }
+.bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; }
+.choices { margin-top: 12px; display:grid; gap:8px; }
+.choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; }
+
+.controls { margin-top: 16px; display:flex; gap:8px; flex-wrap:wrap; }
+button { padding:8px 12px; font-size:1rem; cursor:pointer; }
+
+#meta { color: var(--muted); font-size:.9rem; margin-left: 8px; }
+#progress { font-weight:600; }
+#result { margin-top: 8px; font-weight:600; }
+.result-ok { color: var(--ok); }
+.result-ng { color: var(--ng); }
+
+#scoreboard { margin-top: 12px; color:#333; font-size:.95rem; display:flex; align-items:center; gap: 12px; flex-wrap:wrap;}
+#scoreboard .bar { position:relative; flex: 1 1 220px; height:10px; background:#eee; border-radius:999px; overflow:hidden; }
+#scoreboard .bar > i { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #66bb6a, #43a047); }
+
+#final { display:none; margin-top:18px; padding:12px; border:1px dashed #ccc; border-radius:8px; background:#fcfcfc; }
+#final h2 { margin: 0 0 8px; font-size:1.1rem; }
+#final ul { padding-left: 1.25rem; }
 </style>
 </head>
 <body>
 <header>
-  <h1>問題トレーナー（最適化版）</h1>
+  <h1>問題トレーナー</h1>
   <span id="meta"></span>
-  <label class="pill">
-    JSON読込 <input type="file" id="file" accept="application/json" style="display:none">
-  </label>
+  <label class="pill">JSON読込 <input type="file" id="file" accept="application/json" style="display:none"></label>
 </header>
+
+<section id="settings">
+  <label>科目
+    <select id="subjectSelect">
+      <option value="">すべて</option>
+    </select>
+  </label>
+  <label>問題数
+    <input type="number" id="countInput" min="1" value="10">
+  </label>
+  <label><input type="checkbox" id="shuffle" checked> ランダム</label>
+  <button id="startBtn">この設定で開始</button>
+  <span id="progress"></span>
+</section>
 
 <main>
   <div id="question-body"></div>
   <div id="extras"></div>
   <div id="result"></div>
 
+  <div id="scoreboard">
+    <span>スコア：<b id="scoreText">0 / 0</b>（<b id="scoreRate">0%</b>）</span>
+    <div class="bar"><i id="scoreFill"></i></div>
+  </div>
+
   <div class="controls">
     <button id="submit">採点</button>
     <button id="next">次の問題 ▶</button>
   </div>
+
+  <section id="final">
+    <h2>結果</h2>
+    <p id="finalSummary"></p>
+    <ul id="finalList"></ul>
+  </section>
 </main>
 
 <script>
+  // ====== State ======
+  let ALL = [];
   let QUESTIONS = [];
-  let idx = 0;
+  let IDX = 0;
+  let correctCount = 0;
+  let attempted = 0;
+  let history = []; // {{id, correct, user, answer}}
 
-  // ---- Normalization ----
-  function normalizeForm(s){
-    const map = {
-      '穴埋め':'fill','fill':'fill',
-      '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
-      '並べ替え':'order','並べ替え問題':'order','order':'order',
-      '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
-      '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short',
-    };
-    return map[s] || s;
-  }
-  function normalizeQuestions(arr){
-    return arr.map(q=>{
-      const out = {...q};
-      out.形式 = normalizeForm(out.形式);
-      if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
-        out.選択肢 = ['〇','×'];
-      }
-      // fill: 答えは配列優先。文字列なら1要素化
-      if(out.形式==='fill'){
-        if(Array.isArray(out.答え)) {
-          // ok
-        } else if (typeof out.答え === 'string' && out.答え.trim()) {
-          out.答え = [out.答え.trim()];
-        } else {
-          out.答え = [];
-        }
-      }
-      return out;
-    });
-  }
+  // ====== Normalization ======
+  function normalizeForm(s){const m={{'穴埋め':'fill','fill':'fill','〇×':'truefalse','○×':'truefalse','truefalse':'truefalse','並べ替え':'order','並べ替え問題':'order','order':'order','５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq','書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'}};return m[s]||s;}
+  function normalizeQuestions(arr){return arr.map(q=>{{const out={{...q}};out.形式=normalizeForm(out.形式);if(out.形式==='truefalse'&&(!Array.isArray(out.選択肢)||out.選択肢.length===0)){{out.選択肢=['〇','×'];}}if(out.形式==='fill'){{if(Array.isArray(out.答え)){{}}else if(typeof out.答え==='string'&&out.答え.trim()){{out.答え=[out.答え.trim()];}}else{{out.答え=[];}}}return out;}});}
+  function norm(s){{return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}}
+  function countBlanks(text, answer){{const m=(String(text||'').match(/（　　　）/g)||[]).length;if(m>0)return m;if(Array.isArray(answer))return answer.length||1;return 1;}}
 
-  function countBlanks(text, answer){
-    const m = (String(text||'').match(/（　　　）/g) || []).length;
-    if (m>0) return m;
-    if (Array.isArray(answer)) return answer.length || 1;
-    return 1;
-  }
-  function norm(s){
-    return String(s ?? '').trim().normalize('NFKC').replace(/\s+/g,'');
-  }
+  // ====== UI helpers ======
+  function setProgress(){{document.getElementById('progress').textContent = QUESTIONS.length? `Q ${{IDX+1}} / ${{QUESTIONS.length}}` : '';}}
+  function setMeta(q){{document.getElementById('meta').textContent = `${{q.id||''}} ${{q.科目? ' / '+q.科目 : ''}}`; }}
+  function updateScoreboard(){{const total = attempted; const rate = total? Math.round(100*correctCount/total):0; document.getElementById('scoreText').textContent = `${{correctCount}} / ${{total}}`; document.getElementById('scoreRate').textContent = rate + '%'; document.getElementById('scoreFill').style.width = rate + '%';}}
 
-  // ---- Renderers ----
-  function renderFill(q){
-    const body = document.getElementById('question-body');
-    const extras = document.getElementById('extras');
-    const result = document.getElementById('result');
+  // ====== Renderers ======
+  function renderFill(q){{
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
     body.innerHTML = extras.innerHTML = result.innerHTML = '';
+    const n=countBlanks(q.問題文||'', q.答え);
+    const parts=String(q.問題文||'').split('（　　　）');
+    const choices=Array.isArray(q.選択肢)?q.選択肢:null;
+    const isPerBlankChoices=Array.isArray(choices)&&Array.isArray(choices[0]);
+    const isBank=Array.isArray(choices)&&!isPerBlankChoices;
 
-    const n = countBlanks(q.問題文||'', q.答え);
-    const parts = String(q.問題文||'').split('（　　　）');
-    const choices = Array.isArray(q.選択肢) ? q.選択肢 : null;
-    const isPerBlankChoices = Array.isArray(choices) && Array.isArray(choices[0]);
-    const isBank = Array.isArray(choices) && !isPerBlankChoices;
-
-    for(let i=0;i<parts.length;i++){
+    for(let i=0;i<parts.length;i++){{
       body.append(document.createTextNode(parts[i]));
-      if(i < n){
+      if(i<n){{
         let el;
-        if(isPerBlankChoices){
-          el = document.createElement('select');
-          (choices[i] || []).forEach(opt=>{
-            const o=document.createElement('option');
-            o.value=String(opt); o.textContent=String(opt);
-            el.appendChild(o);
-          });
-        }else{
-          el = document.createElement('input');
-          el.type='text'; el.placeholder = `空欄${i+1}`; el.autocomplete='off';
-        }
-        el.className='blank-input'; el.dataset.blankIndex=i; el.style.minWidth='10em';
-        body.append(el);
-      }
-    }
-    // 語群（ワードバンク）
-    if(isBank){
-      const bank = document.createElement('div');
-      bank.className='bank';
-      choices.forEach(opt=>{
-        const chip = document.createElement('span');
-        chip.className='chip';
-        chip.textContent = String(opt);
-        chip.onclick = () => {
-          const inputs = Array.from(document.querySelectorAll('.blank-input'));
-          const target = inputs.find(x=>!x.value);
-          if(target){ target.value = String(opt); target.focus(); }
-        };
-        bank.append(chip);
-      });
-      extras.append(bank);
-    }
-    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
-  }
+        if(isPerBlankChoices){{ el=document.createElement('select'); (choices[i]||[]).forEach(opt=>{{const o=document.createElement('option'); o.value=String(opt); o.textContent=String(opt); el.appendChild(o);}}); }}
+        else {{ el=document.createElement('input'); el.type='text'; el.placeholder=`空欄${{i+1}}`; el.autocomplete='off'; }}
+        el.className='blank-input'; el.dataset.blankIndex=i; el.style.minWidth='10em'; body.append(el);
+      }}
+    }}
+    if(isBank){{ // Word bank
+      const bank=document.createElement('div'); bank.className='bank';
+      choices.forEach(opt=>{{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=String(opt); chip.onclick=()=>{{const inputs=Array.from(document.querySelectorAll('.blank-input')); const target=inputs.find(x=>!x.value); if(target){{target.value=String(opt); target.focus();}}}}; bank.append(chip);}});
+    extras.append(bank);
+    }}
+    setMeta(q);
+  }}
 
-  function renderMCQ(q){
-    const body = document.getElementById('question-body');
-    const extras = document.getElementById('extras');
-    const result = document.getElementById('result');
-    body.innerHTML = extras.innerHTML = result.innerHTML = '';
-    const stem = document.createElement('div'); stem.textContent = q.問題文 || ''; body.append(stem);
-    const box = document.createElement('div'); box.className='choices'; body.append(box);
-    (q.選択肢||[]).forEach((opt,i)=>{
-      const id = 'opt_'+i;
-      const lbl = document.createElement('label');
-      const inp = document.createElement('input'); inp.type='radio'; inp.name='mcq'; inp.value=String(opt); inp.id=id;
-      const txt = document.createElement('span'); txt.textContent = String(opt);
-      lbl.append(inp, txt);
-      box.append(lbl);
-    });
-    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
-  }
+  function renderMCQ(q){{
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const box=document.createElement('div'); box.className='choices'; body.append(box);
+    (q.選択肢||[]).forEach((opt,i)=>{{const id='opt_'+i; const lbl=document.createElement('label'); const inp=document.createElement('input'); inp.type='radio'; inp.name='mcq'; inp.value=String(opt); inp.id=id; const txt=document.createElement('span'); txt.textContent=String(opt); lbl.append(inp,txt); box.append(lbl);}});
+    setMeta(q);
+  }}
 
-  function renderTF(q){ // true/false
-    renderMCQ(q);
-  }
+  function renderTF(q){{ renderMCQ(q); }}
+  function renderShort(q){{
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const el=document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer'; el.placeholder='ここに解答を入力'; body.append(el);
+    setMeta(q);
+  }}
+  function renderOrder(q){{
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const items=(q.選択肢||[]).slice();
+    for(let i=items.length-1;i>0;i--){{const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]];}}
+    const ul=document.createElement('ol'); ul.id='order-list'; items.forEach(x=>{{const li=document.createElement('li'); li.textContent=String(x); ul.append(li);}});
+    body.append(ul); setMeta(q);
+  }}
 
-  function renderShort(q){
-    const body = document.getElementById('question-body');
-    const extras = document.getElementById('extras');
-    const result = document.getElementById('result');
-    body.innerHTML = extras.innerHTML = result.innerHTML = '';
-    const stem = document.createElement('div'); stem.textContent = q.問題文 || ''; body.append(stem);
-    const el = document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer';
-    el.placeholder='ここに解答を入力'; body.append(el);
-    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
-  }
+  function renderQuestion(q){{
+    setProgress();
+    if(q.形式==='fill') return renderFill(q);
+    if(q.形式==='mcq') return renderMCQ(q);
+    if(q.形式==='truefalse') return renderTF(q);
+    if(q.形式==='short') return renderShort(q);
+    if(q.形式==='order') return renderOrder(q);
+    document.getElementById('question-body').textContent=q.問題文||'';
+  }}
 
-  function renderOrder(q){
-    const body = document.getElementById('question-body');
-    const extras = document.getElementById('extras');
-    const result = document.getElementById('result');
-    body.innerHTML = extras.innerHTML = result.innerHTML = '';
-    const stem = document.createElement('div'); stem.textContent = q.問題文 || ''; body.append(stem);
-    const items = (q.選択肢 || []).slice();
-    // simple shuffle
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
-    }
-    const ul = document.createElement('ol'); ul.id='order-list';
-    items.forEach(x=>{ const li=document.createElement('li'); li.textContent = String(x); ul.append(li); });
-    body.append(ul);
-    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
-  }
+  // ====== Graders ======
+  function isCorrectForBlank(user, spec){{ if(Array.isArray(spec)) return spec.some(a=>norm(a)===norm(user)); return norm(spec)===norm(user);}}
+  function gradeFill(q){{
+    const n=countBlanks(q.問題文||'', q.答え);
+    const inputs=Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex)-(+b.dataset.blankIndex));
+    const user=inputs.map(el=>('value' in el)? el.value : el.options[el.selectedIndex]?.value ?? '');
+    const ans=Array.isArray(q.答え)? q.答え : [q.答え??''];
+    const per=[];
+    for(let i=0;i<n;i++){{ per[i]=isCorrectForBlank(user[i], ans[i]??''); inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336'; }}
+    const correct=per.every(Boolean);
+    // Show expected answers
+    const res=document.getElementById('result');
+    const answerView = ans.map((a,i)=> Array.isArray(a)? `(${i+1}) ${a.join(' / ')}` : `(${i+1}) ${a??''}`).join('　');
+    res.className = correct ? 'result-ok' : 'result-ng';
+    res.textContent = (correct? '正解！' : '不正解…') + (answerView? `　正解：${answerView}` : '');
+    return {{ correct, user, answer: ans, per }};
+  }}
+  function gradeMCQ(q){{
+    const checked=document.querySelector('input[name="mcq"]:checked');
+    const ok=checked && norm(checked.value)===norm(q.答え);
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　正解：${q.答え}` : '');
+    return {{ correct: !!ok, user: checked? checked.value : '', answer: q.答え }};
+  }}
+  function gradeShort(q){{
+    const v=document.getElementById('short-answer')?.value||'';
+    const ans=Array.isArray(q.答え)? q.答え.map(norm) : [norm(q.答え||'')];
+    const ok=ans.some(a=>a===norm(v));
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　模範解答：${Array.isArray(q.答え)? q.答え.join(' / ') : q.答え}` : '');
+    return {{ correct: ok, user: v, answer: q.答え }};
+  }}
+  function gradeOrder(q){{
+    const lis=Array.from(document.querySelectorAll('#order-list li'));
+    const userSeq=lis.map(li=>li.textContent.trim());
+    let ansSeq=[];
+    if(Array.isArray(q.答え)) ansSeq=q.答え.map(String);
+    else if(typeof q.答え==='string') ansSeq=q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
+    const ok=ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (ansSeq.length? `　正解順：${ansSeq.join(' → ')}` : '');
+    return {{ correct: ok, user: userSeq, answer: ansSeq }};
+  }}
 
-  // ---- Graders ----
-  function isCorrectForBlank(user, spec){
-    if (Array.isArray(spec)) return spec.some(a => norm(a)===norm(user));
-    return norm(spec) === norm(user);
-  }
-  function gradeFill(q){
-    const n = countBlanks(q.問題文||'', q.答え);
-    const inputs = Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex) - (+b.dataset.blankIndex));
-    const user = inputs.map(el => ('value' in el) ? el.value : el.options[el.selectedIndex]?.value ?? '');
-    const ans = Array.isArray(q.答え) ? q.答え : [q.答え ?? ''];
-    const per = [];
-    for(let i=0;i<n;i++){
-      per[i] = isCorrectForBlank(user[i], ans[i] ?? '');
-      inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336';
-    }
-    return { correct: per.every(Boolean), detail: per };
-  }
-  function gradeMCQ(q){
-    const checked = document.querySelector('input[name="mcq"]:checked');
-    const ok = checked && norm(checked.value) === norm(q.答え);
-    return { correct: !!ok };
-  }
-  function gradeShort(q){
-    const v = document.getElementById('short-answer')?.value || '';
-    // 文字列一致 or 近似判定は要件次第。ここでは厳密一致（正規化あり）
-    const ans = Array.isArray(q.答え) ? q.答え.map(norm) : [norm(q.答え||'')];
-    const ok = ans.some(a => a === norm(v));
-    return { correct: ok };
-  }
-  function gradeOrder(q){
-    // ここでは順序の厳密一致判定。答えはカンマ区切り "ア, イ, ..." も許容
-    const lis = Array.from(document.querySelectorAll('#order-list li'));
-    const userSeq = lis.map(li=>li.textContent.trim());
-    let ansSeq = [];
-    if(Array.isArray(q.答え)) ansSeq = q.答え.map(String);
-    else if(typeof q.答え === 'string') ansSeq = q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
-    const ok = ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
-    return { correct: ok };
-  }
+  function gradeCurrent(){{
+    const q = QUESTIONS[IDX];
+    if(!q) return;
+    let g;
+    if(q.形式==='fill') g=gradeFill(q);
+    else if(q.形式==='mcq' || q.形式==='truefalse') g=gradeMCQ(q);
+    else if(q.形式==='short') g=gradeShort(q);
+    else if(q.形式==='order') g=gradeOrder(q);
+    else g={{correct:false, user:'', answer:''}};
 
-  function renderQuestion(q){
-    if (q.形式==='fill') return renderFill(q);
-    if (q.形式==='mcq') return renderMCQ(q);
-    if (q.形式==='truefalse') return renderTF(q);
-    if (q.形式==='short') return renderShort(q);
-    if (q.形式==='order') return renderOrder(q);
-    // fallback
-    document.getElementById('question-body').textContent = q.問題文 || '';
-  }
+    attempted++; if(g.correct) correctCount++; updateScoreboard();
+    history.push({{ id:q.id, correct:g.correct, user:g.user, answer:g.answer, subject:q.科目, form:q.形式 }});
+  }}
 
-  function gradeQuestion(q){
-    if (q.形式==='fill') return gradeFill(q);
-    if (q.形式==='mcq' || q.形式==='truefalse') return gradeMCQ(q);
-    if (q.形式==='short') return gradeShort(q);
-    if (q.形式==='order') return gradeOrder(q);
-    return { correct: false };
-  }
+  // ====== Flow ======
+  function show(i){{ IDX=i; const q=QUESTIONS[IDX]; renderQuestion(q); }}
+  function startQuiz(){{ 
+    const sel = document.getElementById('subjectSelect').value;
+    const count = Math.max(1, parseInt(document.getElementById('countInput').value||'10',10));
+    const shuffle = document.getElementById('shuffle').checked;
+    let pool = ALL.filter(q=> !sel || (q.科目===sel));
+    if (shuffle) pool = pool.sort(()=>Math.random()-0.5);
+    QUESTIONS = pool.slice(0, count);
+    IDX=0; correctCount=0; attempted=0; history=[];
+    updateScoreboard(); setProgress();
+    if(QUESTIONS.length===0){{
+      document.getElementById('question-body').textContent='該当する問題が見つかりません。設定を見直してください。'; 
+      return;
+    }}
+    show(0);
+    document.getElementById('final').style.display='none';
+  }}
 
-  function show(idx){
-    const q = QUESTIONS[idx];
-    renderQuestion(q);
-    document.getElementById('result').textContent = '';
-  }
+  function finish(){{
+    const total = QUESTIONS.length;
+    const rate = total? Math.round(100*correctCount/total):0;
+    const final = document.getElementById('final');
+    const sum = document.getElementById('finalSummary');
+    const list = document.getElementById('finalList');
+    sum.textContent = `正答：${{correctCount}} / ${{total}}（${{rate}}%）`;
+    list.innerHTML='';
+    history.forEach((h,i)=>{{
+      if(!h.correct){{
+        const li=document.createElement('li');
+        li.textContent = `Q${{i+1}}（${{h.id}}）：あなたの回答 → ${{Array.isArray(h.user)? h.user.join(' / ') : h.user}}｜正解 → ${{Array.isArray(h.answer)? h.answer.join(' / ') : h.answer}}`;
+        list.append(li);
+      }}
+    }});
+    final.style.display='block';
+  }}
 
-  document.getElementById('submit').onclick = () => {
-    const q = QUESTIONS[idx];
-    const res = gradeQuestion(q);
-    document.getElementById('result').textContent = res.correct ? '正解！' : '不正解…';
-  };
-  document.getElementById('next').onclick = () => {
-    idx = (idx + 1) % QUESTIONS.length;
-    show(idx);
-  };
-  document.getElementById('file').onchange = async (e) => {
+  // ====== Events ======
+  document.getElementById('startBtn').onclick = startQuiz;
+  document.getElementById('submit').onclick = gradeCurrent;
+  document.getElementById('next').onclick = () => {{
+    if (IDX+1 < QUESTIONS.length) {{ show(IDX+1); }}
+    else {{ finish(); }}
+  }};
+
+  document.getElementById('file').onchange = async (e) => {{
     const f = e.target.files[0];
     const txt = await f.text();
     const data = JSON.parse(txt);
-    QUESTIONS = normalizeQuestions(data);
-    idx = 0; show(idx);
-  };
+    ALL = normalizeQuestions(data);
+    const subs = [...new Set(ALL.map(q=>q.科目).filter(Boolean))].sort();
+    const sel = document.getElementById('subjectSelect');
+    sel.innerHTML='<option value="">すべて</option>' + subs.map(s=>`<option value="${{s}}">${{s}}</option>`).join('');
+    document.getElementById('progress').textContent = '読込完了。設定を選んで開始してください。';
+  }};
 
-  // Default load from optimized JSON (same folder)
+  // Default load from data/questions.json
   fetch('data/questions.json').then(r=>r.json()).then(data=>{
-    QUESTIONS = normalizeQuestions(data);
-    idx = 0; show(idx);
+    ALL = normalizeQuestions(data);
+    const subs = [...new Set(ALL.map(q=>q.科目).filter(Boolean))].sort();
+    const sel = document.getElementById('subjectSelect');
+    sel.innerHTML='<option value="">すべて</option>' + subs.map(s=>`<option value="${{s}}">${{s}}</option>`).join('');
+    document.getElementById('progress').textContent = 'データ読込済み。設定を選んで開始してください。';
   }).catch(err=>{
-    document.getElementById('question-body').textContent = 'data/questions.json の読込に失敗しました。上の「JSON読込」からファイルを選んでください。';
+    document.getElementById('progress').textContent = 'data/questions.json の読込に失敗。上の「JSON読込」でファイルを選んでください。';
     console.error(err);
   });
-
 </script>
 </body>
 </html>
