@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>問題トレーナー（最適化版）</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif; margin: 24px; }
+  header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  h1 { font-size: 1.25rem; margin:0; }
+  #meta { color:#666; font-size:.9rem; }
+  #question-body { padding: 16px; background:#fafafa; border:1px solid #eee; border-radius:8px; line-height:1.9; }
+  .blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; }
+  .choices { margin-top: 12px; display: grid; gap: 8px; }
+  .choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; }
+  .controls { margin-top: 16px; display:flex; gap:8px; flex-wrap:wrap; }
+  button { padding:8px 12px; font-size:1rem; cursor:pointer; }
+  #result { margin-top: 12px; font-weight:600; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef; color:#225; font-size:.8rem; margin-left:8px; }
+  .bank { margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; }
+  .bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>問題トレーナー（最適化版）</h1>
+  <span id="meta"></span>
+  <label class="pill">
+    JSON読込 <input type="file" id="file" accept="application/json" style="display:none">
+  </label>
+</header>
+
+<main>
+  <div id="question-body"></div>
+  <div id="extras"></div>
+  <div id="result"></div>
+
+  <div class="controls">
+    <button id="submit">採点</button>
+    <button id="next">次の問題 ▶</button>
+  </div>
+</main>
+
+<script>
+  let QUESTIONS = [];
+  let idx = 0;
+
+  // ---- Normalization ----
+  function normalizeForm(s){
+    const map = {
+      '穴埋め':'fill','fill':'fill',
+      '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
+      '並べ替え':'order','並べ替え問題':'order','order':'order',
+      '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
+      '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short',
+    };
+    return map[s] || s;
+  }
+  function normalizeQuestions(arr){
+    return arr.map(q=>{
+      const out = {...q};
+      out.形式 = normalizeForm(out.形式);
+      if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
+        out.選択肢 = ['〇','×'];
+      }
+      // fill: 答えは配列優先。文字列なら1要素化
+      if(out.形式==='fill'){
+        if(Array.isArray(out.答え)) {
+          // ok
+        } else if (typeof out.答え === 'string' && out.答え.trim()) {
+          out.答え = [out.答え.trim()];
+        } else {
+          out.答え = [];
+        }
+      }
+      return out;
+    });
+  }
+
+  function countBlanks(text, answer){
+    const m = (String(text||'').match(/（　　　）/g) || []).length;
+    if (m>0) return m;
+    if (Array.isArray(answer)) return answer.length || 1;
+    return 1;
+  }
+  function norm(s){
+    return String(s ?? '').trim().normalize('NFKC').replace(/\s+/g,'');
+  }
+
+  // ---- Renderers ----
+  function renderFill(q){
+    const body = document.getElementById('question-body');
+    const extras = document.getElementById('extras');
+    const result = document.getElementById('result');
+    body.innerHTML = extras.innerHTML = result.innerHTML = '';
+
+    const n = countBlanks(q.問題文||'', q.答え);
+    const parts = String(q.問題文||'').split('（　　　）');
+    const choices = Array.isArray(q.選択肢) ? q.選択肢 : null;
+    const isPerBlankChoices = Array.isArray(choices) && Array.isArray(choices[0]);
+    const isBank = Array.isArray(choices) && !isPerBlankChoices;
+
+    for(let i=0;i<parts.length;i++){
+      body.append(document.createTextNode(parts[i]));
+      if(i < n){
+        let el;
+        if(isPerBlankChoices){
+          el = document.createElement('select');
+          (choices[i] || []).forEach(opt=>{
+            const o=document.createElement('option');
+            o.value=String(opt); o.textContent=String(opt);
+            el.appendChild(o);
+          });
+        }else{
+          el = document.createElement('input');
+          el.type='text'; el.placeholder = `空欄${i+1}`; el.autocomplete='off';
+        }
+        el.className='blank-input'; el.dataset.blankIndex=i; el.style.minWidth='10em';
+        body.append(el);
+      }
+    }
+    // 語群（ワードバンク）
+    if(isBank){
+      const bank = document.createElement('div');
+      bank.className='bank';
+      choices.forEach(opt=>{
+        const chip = document.createElement('span');
+        chip.className='chip';
+        chip.textContent = String(opt);
+        chip.onclick = () => {
+          const inputs = Array.from(document.querySelectorAll('.blank-input'));
+          const target = inputs.find(x=>!x.value);
+          if(target){ target.value = String(opt); target.focus(); }
+        };
+        bank.append(chip);
+      });
+      extras.append(bank);
+    }
+    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
+  }
+
+  function renderMCQ(q){
+    const body = document.getElementById('question-body');
+    const extras = document.getElementById('extras');
+    const result = document.getElementById('result');
+    body.innerHTML = extras.innerHTML = result.innerHTML = '';
+    const stem = document.createElement('div'); stem.textContent = q.問題文 || ''; body.append(stem);
+    const box = document.createElement('div'); box.className='choices'; body.append(box);
+    (q.選択肢||[]).forEach((opt,i)=>{
+      const id = 'opt_'+i;
+      const lbl = document.createElement('label');
+      const inp = document.createElement('input'); inp.type='radio'; inp.name='mcq'; inp.value=String(opt); inp.id=id;
+      const txt = document.createElement('span'); txt.textContent = String(opt);
+      lbl.append(inp, txt);
+      box.append(lbl);
+    });
+    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
+  }
+
+  function renderTF(q){ // true/false
+    renderMCQ(q);
+  }
+
+  function renderShort(q){
+    const body = document.getElementById('question-body');
+    const extras = document.getElementById('extras');
+    const result = document.getElementById('result');
+    body.innerHTML = extras.innerHTML = result.innerHTML = '';
+    const stem = document.createElement('div'); stem.textContent = q.問題文 || ''; body.append(stem);
+    const el = document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer';
+    el.placeholder='ここに解答を入力'; body.append(el);
+    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
+  }
+
+  function renderOrder(q){
+    const body = document.getElementById('question-body');
+    const extras = document.getElementById('extras');
+    const result = document.getElementById('result');
+    body.innerHTML = extras.innerHTML = result.innerHTML = '';
+    const stem = document.createElement('div'); stem.textContent = q.問題文 || ''; body.append(stem);
+    const items = (q.選択肢 || []).slice();
+    // simple shuffle
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    const ul = document.createElement('ol'); ul.id='order-list';
+    items.forEach(x=>{ const li=document.createElement('li'); li.textContent = String(x); ul.append(li); });
+    body.append(ul);
+    document.getElementById('meta').textContent = `${q.id || ''} ${q.科目? ' / '+q.科目 : ''}`;
+  }
+
+  // ---- Graders ----
+  function isCorrectForBlank(user, spec){
+    if (Array.isArray(spec)) return spec.some(a => norm(a)===norm(user));
+    return norm(spec) === norm(user);
+  }
+  function gradeFill(q){
+    const n = countBlanks(q.問題文||'', q.答え);
+    const inputs = Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex) - (+b.dataset.blankIndex));
+    const user = inputs.map(el => ('value' in el) ? el.value : el.options[el.selectedIndex]?.value ?? '');
+    const ans = Array.isArray(q.答え) ? q.答え : [q.答え ?? ''];
+    const per = [];
+    for(let i=0;i<n;i++){
+      per[i] = isCorrectForBlank(user[i], ans[i] ?? '');
+      inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336';
+    }
+    return { correct: per.every(Boolean), detail: per };
+  }
+  function gradeMCQ(q){
+    const checked = document.querySelector('input[name="mcq"]:checked');
+    const ok = checked && norm(checked.value) === norm(q.答え);
+    return { correct: !!ok };
+  }
+  function gradeShort(q){
+    const v = document.getElementById('short-answer')?.value || '';
+    // 文字列一致 or 近似判定は要件次第。ここでは厳密一致（正規化あり）
+    const ans = Array.isArray(q.答え) ? q.答え.map(norm) : [norm(q.答え||'')];
+    const ok = ans.some(a => a === norm(v));
+    return { correct: ok };
+  }
+  function gradeOrder(q){
+    // ここでは順序の厳密一致判定。答えはカンマ区切り "ア, イ, ..." も許容
+    const lis = Array.from(document.querySelectorAll('#order-list li'));
+    const userSeq = lis.map(li=>li.textContent.trim());
+    let ansSeq = [];
+    if(Array.isArray(q.答え)) ansSeq = q.答え.map(String);
+    else if(typeof q.答え === 'string') ansSeq = q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
+    const ok = ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
+    return { correct: ok };
+  }
+
+  function renderQuestion(q){
+    if (q.形式==='fill') return renderFill(q);
+    if (q.形式==='mcq') return renderMCQ(q);
+    if (q.形式==='truefalse') return renderTF(q);
+    if (q.形式==='short') return renderShort(q);
+    if (q.形式==='order') return renderOrder(q);
+    // fallback
+    document.getElementById('question-body').textContent = q.問題文 || '';
+  }
+
+  function gradeQuestion(q){
+    if (q.形式==='fill') return gradeFill(q);
+    if (q.形式==='mcq' || q.形式==='truefalse') return gradeMCQ(q);
+    if (q.形式==='short') return gradeShort(q);
+    if (q.形式==='order') return gradeOrder(q);
+    return { correct: false };
+  }
+
+  function show(idx){
+    const q = QUESTIONS[idx];
+    renderQuestion(q);
+    document.getElementById('result').textContent = '';
+  }
+
+  document.getElementById('submit').onclick = () => {
+    const q = QUESTIONS[idx];
+    const res = gradeQuestion(q);
+    document.getElementById('result').textContent = res.correct ? '正解！' : '不正解…';
+  };
+  document.getElementById('next').onclick = () => {
+    idx = (idx + 1) % QUESTIONS.length;
+    show(idx);
+  };
+  document.getElementById('file').onchange = async (e) => {
+    const f = e.target.files[0];
+    const txt = await f.text();
+    const data = JSON.parse(txt);
+    QUESTIONS = normalizeQuestions(data);
+    idx = 0; show(idx);
+  };
+
+  // Default load from optimized JSON (same folder)
+  fetch('data/questions.json').then(r=>r.json()).then(data=>{
+    QUESTIONS = normalizeQuestions(data);
+    idx = 0; show(idx);
+  }).catch(err=>{
+    document.getElementById('question-body').textContent = 'data/questions.json の読込に失敗しました。上の「JSON読込」からファイルを選んでください。';
+    console.error(err);
+  });
+
+</script>
+</body>
+</html>
