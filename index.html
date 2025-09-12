@@ -3,546 +3,400 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>問題トレーナー（リデザイン版）</title>
+<title>問題トレーナー（questions.json対応）</title>
 <style>
-:root{
-  /* Colorblind-safe palette */
-  --ink:#222; --bg:#fff; --muted:#5b5b5b; --panel:#fafafa; --line:#e6e6e6;
-  --ok:#1e88e5;  /* blue */
-  --info:#2e7d32;/* green */
-  --warn:#f57c00;/* orange */
-  --err:#d32f2f; /* red (secondary cues only) */
-  --chip:#eef; --chipfg:#224;
-  --focus:#1565c0;
-}
+:root { --ok:#2e7d32; --ng:#c62828; --muted:#666; --ink:#222; --chip:#eef; --chipfg:#225; }
 *{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:var(--ink);background:var(--bg)}
-.container{
-  max-width:800px;
-  margin:0 auto;
-  padding:20px;
-}
-
-header{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:14px;
-}
-h1{font-size:1.2rem;margin:0}
-.pill{display:inline-flex;gap:8px;align-items:center;padding:3px 10px;border-radius:999px;background:var(--chip);color:var(--chipfg);font-size:.8rem}
-#settings{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
-  gap:16px;
-  align-items:end;
-  margin:8px 0 14px;
-}
-#settings label{font-size:.9rem;color:#333;display:flex;flex-direction:column;gap:4px}
-#settings input[type="number"]{width:7em}
-select, input[type="number"], textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px}
-button{
-  padding:12px 20px;
-  font-size:1.1rem;
-  cursor:pointer;
-  border-radius:8px;
-  border:1px solid var(--line);
-  background:#fff;
-  transition:all 0.2s ease;
-}
-button:hover{
-  filter:brightness(0.95);
-}
-button.primary{border-color:transparent;background:var(--ok);color:#fff}
-button.ghost{border-style:dashed}
-#question-body{padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;line-height:1.8;min-height:84px;margin-top:14px}
-.blank-input{margin:0 6px;padding:6px 8px;font-size:1rem;min-width:10em;border:1px solid var(--line);border-radius:4px}
-.bank{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-.bank .chip{border:1px solid var(--line);padding:4px 8px;border-radius:999px;cursor:pointer;background:#fff}
-.choices{margin-top:12px;display:grid;gap:8px}
-.choices label{display:flex;align-items:center;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:#fff;transition:all 0.2s ease;}
-.choices label:hover{background:var(--panel);}
-.choices input[type="radio"]{transform:scale(1.2);}
-.controls{
-  display:flex;
-  gap:10px;
-  margin-top:20px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-#meta{color:var(--muted);font-size:.9rem;margin-left:8px}
-#progress{font-weight:600}
-#result{margin-top:8px}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;border:1px solid}
-.badge.ok{border-color:var(--ok);background:#e8f2ff;color:#0d47a1}
-.badge.ng{border-color:var(--warn);background:#fff2e0;color:#6a3b00}
-.hint{margin-top:8px;color:#333;font-size:.95rem}
-.hint .muted{color:var(--muted)}
-#explain{
-  margin-top:10px;
-  padding:10px;
-  border:1px dashed var(--line);
-  border-radius:8px;
-  background:#fcfcfc;
-  display: none;
-  overflow:hidden;
-  transition: max-height 0.3s ease-in-out;
-  max-height: 0;
-}
-#explain.open{
-  max-height: 500px; /* Adjust as needed */
-  display: block;
-}
-#explain .title{font-weight:700;margin-bottom:6px}
-.reveal{
-  margin-top:10px;
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-.reveal button{
-  padding:8px 16px;
-  font-size:0.95rem;
-}
-#scoreboard{
-  margin-top:10px;
-  padding:10px 16px;
-  background:#f8f8f8;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap;
-}
-#scoreboard .bar{position:relative;flex:1 1 220px;height:10px;background:#eee;border-radius:999px;overflow:hidden}
-#scoreboard .bar>i{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#90caf9,#42a5f5);transition:width 0.3s ease-in-out;}
-#final{display:none;margin-top:16px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:#fcfcfc}
-#final h2{margin:0 0 8px;font-size:1.05rem}
-#final ul{padding-left:1.25rem}
-#alert{margin-left:8px;color:#b71c1c;font-weight:600}
-#extras{margin-top:6px}
-small.muted{color:var(--muted)}
-kbd{font-family:ui-monospace,Menlo,Consolas,monospace;padding:2px 5px;border:1px solid var(--line);border-radius:6px;background:#fff}
-/* focus ring */
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-@media (max-width: 640px){
-  .container{padding:14px}
-  #settings{grid-template-columns:1fr;}
-  .controls{flex-direction:column;align-items:stretch;}
-  button{padding:12px;}
-}
+body { margin: 24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; color:var(--ink) }
+header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
+h1 { font-size:1.25rem; margin:0; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; background:var(--chip); color:var(--chipfg); font-size:.8rem; margin-left:8px; }
+#settings { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin: 8px 0 16px; }
+#settings label { font-size:.9rem; color:#333; display:flex; flex-direction:column; gap:4px; }
+#settings input[type="number"]{ width:7em; }
+#question-body { padding: 16px; background:#fafafa; border:1px solid #eee; border-radius:8px; line-height:1.9; }
+.blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; min-width:10em }
+.bank { margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; }
+.bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; background:#fff }
+.choices { margin-top: 12px; display:grid; gap:8px; }
+.choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; background:#fff }
+.controls { margin-top: 16px; display:flex; gap:8px; flex-wrap:wrap; }
+button { padding:8px 12px; font-size:1rem; cursor:pointer; }
+#meta { color: var(--muted); font-size:.9rem; margin-left: 8px; }
+#progress { font-weight:600; }
+#result { margin-top: 8px; font-weight:600; }
+.result-ok { color: var(--ok); }
+.result-ng { color: var(--ng); }
+#scoreboard { margin-top: 12px; color:#333; font-size:.95rem; display:flex; align-items:center; gap: 12px; flex-wrap:wrap;}
+#scoreboard .bar { position:relative; flex: 1 1 220px; height:10px; background:#eee; border-radius:999px; overflow:hidden; }
+#scoreboard .bar > i { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #66bb6a, #43a047); }
+#final { display:none; margin-top:18px; padding:12px; border:1px dashed #ccc; border-radius:8px; background:#fcfcfc; }
+#final h2 { margin: 0 0 8px; font-size:1.1rem; }
+#final ul { padding-left: 1.25rem; }
+#alert { margin-left: 8px; color: #b71c1c; font-weight: 600; }
+small.muted{ color:var(--muted) }
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>問題トレーナー</h1>
-    <span class="pill">データ: <b>questions.json</b> を自動読込</span>
-  </header>
+<header>
+  <h1>問題トレーナー</h1>
+  <span id="meta"></span>
+  <span id="alert"></span>
+  <span class="pill">データ: <b>questions.json</b> を自動読込</span>
+</header>
 
-  <section id="scoreboard">
-    <div>
-      <span>スコア：<b id="scoreText">0 / 0</b>（<b id="scoreRate">0%</b>）</span>
-      <span id="meta" style="margin-left:8px"></span>
-    </div>
+<section id="settings">
+  <label>科目
+    <select id="subjectSelect">
+      <option value="">すべて</option>
+    </select>
+  </label>
+  <label>問題数
+    <input type="number" id="countInput" min="1" value="20">
+  </label>
+  <label><input type="checkbox" id="shuffle" checked> ランダム</label>
+  <button id="startBtn">この設定で開始</button>
+  <span id="progress"></span>
+</section>
+
+<main>
+  <div id="question-body"><small class="muted">questions.json の読み込みを待機中…</small></div>
+  <div id="extras"></div>
+  <div id="result"></div>
+
+  <div id="scoreboard">
+    <span>スコア：<b id="scoreText">0 / 0</b>（<b id="scoreRate">0%</b>）</span>
     <div class="bar"><i id="scoreFill"></i></div>
-    <span>ショートカット：<kbd>Enter</kbd> 採点 / <kbd>N</kbd> 次へ</span>
+  </div>
+
+  <div class="controls">
+    <button id="submit">採点</button>
+    <button id="next">次の問題 ▶</button>
+  </div>
+
+  <section id="final">
+    <h2>結果</h2>
+    <p id="finalSummary"></p>
+    <ul id="finalList"></ul>
   </section>
-
-  <section id="settings">
-    <label>モード
-      <select id="mode">
-        <option value="normal" selected>通常出題</option>
-        <option value="wrong">誤答ノートから出題</option>
-        <option value="due">今日の復習（間隔反復）</option>
-      </select>
-    </label>
-    <label>科目
-      <select id="subjectSelect">
-        <option value="">すべて</option>
-      </select>
-    </label>
-    <label>問題数
-      <input type="number" id="countInput" min="1" value="20">
-    </label>
-    <label><input type="checkbox" id="shuffle" checked> ランダム</label>
-    <button id="startBtn" class="primary">この設定で開始</button>
-  </section>
-
-  <main>
-    <div id="question-body"><small class="muted">questions.json の読み込みを待機中…</small></div>
-    <div id="extras"></div>
-
-    <div id="result"></div>
-    <div id="explain"></div>
-
-    <div class="controls">
-      <div id="confidence" style="display:none;align-items:center;gap:6px">
-        <span class="muted">自信度：</span>
-        <button data-c="1" title="全然自信なし（すぐ出す）">1</button>
-        <button data-c="2" title="やや自信なし">2</button>
-        <button data-c="3" title="やや自信あり">3</button>
-        <button data-c="4" title="完全に覚えた">4</button>
-      </div>
-      <button id="submit" class="primary">採点</button>
-      <button id="revealExplain" class="ghost">解説を表示</button>
-      <button id="next">次の問題 ▶</button>
-    </div>
-
-    <section id="final">
-      <h2>結果</h2>
-      <p id="finalSummary"></p>
-      <ul id="finalList"></ul>
-    </section>
-  </main>
-</div>
+</main>
 
 <script>
-/* ====== 状態と定数 ====== */
-let ALL = [];
-let QUESTIONS = [];
-let IDX = 0, correctCount = 0, attempted = 0;
-let history = [];
-const WRONGBOOK_KEY = 'trainer_wrongbook_v1';
-const THEME_KEY = 'trainer_theme_v1';
+  let ALL = [];
+  let QUESTIONS = [];
+  let IDX = 0, correctCount = 0, attempted = 0;
+  let history = [];
 
-const els = {
-  mode: document.getElementById('mode'),
-  subject: document.getElementById('subjectSelect'),
-  count: document.getElementById('countInput'),
-  shuffle: document.getElementById('shuffle'),
-  start: document.getElementById('startBtn'),
-  qbody: document.getElementById('question-body'),
-  extras: document.getElementById('extras'),
-  result: document.getElementById('result'),
-  explain: document.getElementById('explain'),
-  revealExplain: document.getElementById('revealExplain'),
-  confidence: document.getElementById('confidence'),
-  meta: document.getElementById('meta'),
-  progress: document.getElementById('progress'),
-  scoreText: document.getElementById('scoreText'),
-  scoreRate: document.getElementById('scoreRate'),
-  scoreFill: document.getElementById('scoreFill'),
-  submit: document.getElementById('submit'),
-  next: document.getElementById('next'),
-  final: document.getElementById('final'),
-  finalSummary: document.getElementById('finalSummary'),
-  finalList: document.getElementById('finalList'),
-};
+  /* ====== 正規化・ユーティリティ ====== */
+  const FORM_MAP = {
+    '穴埋め':'fill','fill':'fill',
+    '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
+    '並べ替え':'order','並べ替え問題':'order','order':'order',
+    '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
+    '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'
+  };
+  function normalizeForm(s){ return FORM_MAP[s] || s; }
 
-/* ====== テーマ切替 ====== */
-function applyTheme(name){
-  if(name==='classic'){
-    document.documentElement.style.setProperty('--ok', '#2e7d32'); // green
-    document.documentElement.style.setProperty('--warn', '#c62828'); // red-ish
-  }else{
-    document.documentElement.style.setProperty('--ok', '#1e88e5'); // blue
-    document.documentElement.style.setProperty('--warn', '#f57c00'); // orange
-  }
-}
-// 既存のテーマ切替機能は、今回のリデザインでは不要と判断し削除しました。
-// もし必要であれば、元のコードから移植してください。
-
-/* ====== 正規化・ユーティリティ ====== */
-const FORM_MAP = {
-  '穴埋め':'fill','fill':'fill',
-  '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
-  '並べ替え':'order','並べ替え問題':'order','order':'order',
-  '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
-  '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'
-};
-function normalizeForm(s){ return FORM_MAP[s] || s; }
-
-function tryParseJsonStringMaybeArray(x){
-  if (typeof x === 'string'){
-    const t = x.trim();
-    if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('{') && t.endsWith('}'))){
-      try{ return JSON.parse(t); }catch(e){ return x; }
-    }
-    if (t.startsWith("['") || t.startsWith('["')){
-      try{ const j = t.replace(/'/g, '"'); return JSON.parse(j); }catch(e){ return x; }
-    }
-  }
-  return x;
-}
-function normalizeQuestions(arr){
-  return arr.map(q=>{
-    const out = { ...q };
-    out.形式 = normalizeForm(String(out.形式||'').trim());
-    if ('選択肢' in out){
-      const parsed = tryParseJsonStringMaybeArray(out.選択肢);
-      out.選択肢 = parsed;
-      if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
-        const p2 = tryParseJsonStringMaybeArray(out.選択肢[0]);
-        if (Array.isArray(p2)) out.選択肢 = p2;
+  function tryParseJsonStringMaybeArray(x){
+    // some data has '["〇","×"]' as a string; parse safely
+    if (typeof x === 'string'){
+      const t = x.trim();
+      if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('{') && t.endsWith('}'))){
+        try{ return JSON.parse(t); }catch(e){ return x; }
+      }
+      // also allow "['a','b']" → convert to JSON-ish
+      if (t.startsWith("['") || t.startsWith('["')){
+        try{
+          const j = t.replace(/'/g, '"');
+          return JSON.parse(j);
+        }catch(e){ return x; }
       }
     }
-    if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
-      out.選択肢=['〇','×'];
-    }
-    if(out.形式==='order'){
-      out.答え = tryParseJsonStringMaybeArray(out.答え);
-      out.選択肢 = tryParseJsonStringMaybeArray(out.選択肢);
-      if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
-        const p = tryParseJsonStringMaybeArray(out.選択肢[0]);
-        if (Array.isArray(p)) out.選択肢 = p;
-      }
-    }
-    if(out.形式==='fill'){
-      if(Array.isArray(out.答え)){}
-      else if(typeof out.答え==='string' && out.答え.trim()){
-        const parts = out.答え.split(/\s*\/\s*|\n/).map(s=>s.trim()).filter(Boolean);
-        out.答え = parts.length>1 ? parts : [out.答え.trim()];
-      }else{
-        out.答え = [];
-      }
-    }
-    if(!out.科目 || (typeof out.科目==='string' && out.科目.trim()==='')) out.科目 = '未分類';
-    return out;
-  });
-}
-function norm(s){return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}
-
-function countBlanks(text, answer){
-  const m=(String(text||'').match(/（\s*?）/g)||[]).length;
-  if(m === 0){return String(answer||'').split(/\s*\/\s*|\n/).length;}
-  return m;
-}
-
-function renderQuestion(q){
-  els.extras.innerHTML = '';
-  els.explain.style.display = 'none';
-  els.explain.classList.remove('open');
-  els.result.innerHTML = '';
-  els.confidence.style.display = 'none';
-  els.submit.style.display = 'inline-block';
-  els.next.style.display = 'none';
-  els.revealExplain.style.display = 'inline-block';
-  if(q.解説 && q.解説.trim()){
-      els.explain.innerHTML = `<div class="title">解説：</div><div>${String(q.解説).replace(/\n/g,'<br>')}</div>`;
-  } else {
-      els.revealExplain.style.display = 'none';
+    return x;
   }
-  
-  const h = q.難易度 ? `<span class="pill">${q.難易度}</span>` : '';
-  const meta = `${h} <span class="pill">形式: ${q.形式}</span>`;
-  els.meta.innerHTML = meta;
 
-  const content = q.問題文.replace(/\n/g,'<br>');
-
-  switch(q.形式){
-    case 'fill':
-      let html = content;
-      const inputs = q.答え.map((_, i) => `<input type="text" class="blank-input" data-idx="${i}" autocomplete="off">`);
-      html = html.replace(/（\s*?）/g, () => inputs.shift());
-      els.qbody.innerHTML = html;
-      break;
-    case 'mcq':
-    case 'truefalse':
-      const choices = q.選択肢.map((opt, i) =>
-        `<label><input type="radio" name="choice" value="${i}" data-ans="${String(q.答え).trim()}"><span>${opt}</span></label>`
-      ).join('');
-      els.qbody.innerHTML = `${content}<div class="choices">${choices}</div>`;
-      break;
-    case 'order':
-      const orderOptions = q.選択肢.map((opt, i) => `<div class="chip" draggable="true" ondragstart="drag(event)" data-idx="${i}">${opt}</div>`).join('');
-      const orderHtml = `<div>${content}</div><div class="bank">${orderOptions}</div><div class="drop-area" ondrop="drop(event)" ondragover="allowDrop(event)"></div>`;
-      els.qbody.innerHTML = orderHtml;
-      break;
-    default:
-      els.qbody.innerHTML = `<small class="muted">この問題形式には対応していません: ${q.形式}</small>`;
-      break;
-  }
-}
-
-function checkAnswer(){
-  const q = QUESTIONS[IDX];
-  let correct = false;
-  let userAnswer = '';
-  switch(q.形式){
-    case 'fill':
-      const userAnswers = [...els.qbody.querySelectorAll('.blank-input')].map(input=>norm(input.value));
-      const correctAnswers = q.答え.map(norm);
-      correct = userAnswers.length === correctAnswers.length && userAnswers.every(ans=>correctAnswers.includes(ans));
-      userAnswer = userAnswers;
-      break;
-    case 'mcq':
-    case 'truefalse':
-      const checked = els.qbody.querySelector('input[name="choice"]:checked');
-      if(!checked){ els.result.innerHTML=`<span class="badge ng">回答が選択されていません</span>`; return; }
-      userAnswer = checked.nextElementSibling.textContent;
-      correct = (norm(userAnswer) === norm(q.答え)) || (norm(checked.dataset.ans) === norm(userAnswer));
-      break;
-    case 'order':
-      const ordered = [...els.qbody.querySelectorAll('.drop-area .chip')].map(chip=>chip.textContent);
-      userAnswer = ordered;
-      const correctOrder = q.答え;
-      correct = JSON.stringify(ordered) === JSON.stringify(correctOrder);
-      break;
-    default:
-      return;
-  }
-  
-  if(correct){
-    els.result.innerHTML=`<span class="badge ok">正解です！</span>`;
-    correctCount++;
-  }else{
-    els.result.innerHTML=`<span class="badge ng">不正解です...</span>`;
-    els.revealExplain.style.display = 'inline-block';
-    
-    // 不正解の時に答えをヒントとして表示
-    if (q.形式 === 'fill') {
-      const inputs = els.qbody.querySelectorAll('.blank-input');
-      inputs.forEach((input, i) => {
-        if (norm(input.value) !== norm(q.答え[i])) {
-          input.value = q.答え[i];
-          input.style.backgroundColor = '#ffe0e0';
+  function normalizeQuestions(arr){
+    return arr.map(q=>{
+      const out = { ...q };
+      out.形式 = normalizeForm(String(out.形式||'').trim());
+      // normalize 選択肢：stringified array → array
+      if ('選択肢' in out){
+        const parsed = tryParseJsonStringMaybeArray(out.選択肢);
+        out.選択肢 = parsed;
+        // some data has ["[\"〇\", \"×\"]"] (array with one JSON-string)
+        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
+          const p2 = tryParseJsonStringMaybeArray(out.選択肢[0]);
+          if (Array.isArray(p2)) out.選択肢 = p2;
         }
-      });
+      }
+      // truefalse: default choices
+      if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
+        out.選択肢 = ['〇','×'];
+      }
+      // order: 答えや選択肢が文字列化JSONのことがある
+      if(out.形式==='order'){
+        out.答え = tryParseJsonStringMaybeArray(out.答え);
+        out.選択肢 = tryParseJsonStringMaybeArray(out.選択肢);
+        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
+          const p = tryParseJsonStringMaybeArray(out.選択肢[0]);
+          if (Array.isArray(p)) out.選択肢 = p;
+        }
+      }
+      // fill: 答えは配列に
+      if(out.形式==='fill'){
+        if(Array.isArray(out.答え)){
+          // ok
+        }else if(typeof out.答え==='string' && out.答え.trim()){
+          // "A / B / C" で分割、改行も区切りとして解釈
+          const parts = out.答え.split(/\s*\/\s*|\n/).map(s=>s.trim()).filter(Boolean);
+          out.答え = parts.length>1 ? parts : [out.答え.trim()];
+        }else{
+          out.答え = [];
+        }
+      }
+      // 科目欠落補正
+      if(!out.科目 || (typeof out.科目==='string' && out.科目.trim()==='')) out.科目 = '未分類';
+      return out;
+    });
+  }
+
+  function norm(s){return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}
+  function countBlanks(text, answer){
+    const m=(String(text||'').match(/（　　　）/g)||[]).length;
+    if(m>0) return m;
+    if(Array.isArray(answer)) return answer.length||1;
+    return 1;
+  }
+
+  function buildSubjects(){
+    const subs=[...new Set(ALL.map(q=> (q.科目 && String(q.科目).trim()) ? String(q.科目).trim() : '未分類'))].sort();
+    const sel=document.getElementById('subjectSelect');
+    sel.innerHTML = '<option value=\"\">すべて</option>' + subs.map(s=>`<option value=\"${s}\">${s}</option>`).join('');
+  }
+
+  function setProgress(){document.getElementById('progress').textContent = QUESTIONS.length? `Q ${IDX+1} / ${QUESTIONS.length}` : '';}
+  function setMeta(q){document.getElementById('meta').textContent = `${q.id||''} ${q.科目? ' / '+q.科目 : ''}`; }
+  function updateScoreboard(){
+    const total = attempted; const rate = total? Math.round(100*correctCount/total):0;
+    document.getElementById('scoreText').textContent = `${correctCount} / ${total}`;
+    document.getElementById('scoreRate').textContent = rate + '%';
+    document.getElementById('scoreFill').style.width = rate + '%';
+  }
+
+  /* ====== レンダリング ====== */
+  function renderFill(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const n=countBlanks(q.問題文||'', q.答え);
+    const parts=String(q.問題文||'').split('（　　　）');
+    const choices=Array.isArray(q.選択肢)?q.選択肢:null;
+    const isPerBlankChoices=Array.isArray(choices)&&Array.isArray(choices[0]);
+    const isBank=Array.isArray(choices)&&!isPerBlankChoices;
+    for(let i=0;i<parts.length;i++){
+      body.append(document.createTextNode(parts[i]));
+      if(i<n){
+        let el;
+        if(isPerBlankChoices){ el=document.createElement('select'); (choices[i]||[]).forEach(opt=>{const o=document.createElement('option'); o.value=String(opt); o.textContent=String(opt); el.appendChild(o);}); }
+        else { el=document.createElement('input'); el.type='text'; el.placeholder=`空欄${i+1}`; el.autocomplete='off'; }
+        el.className='blank-input'; el.dataset.blankIndex=i; body.append(el);
+      }
+    }
+    if(isBank){
+      const bank=document.createElement('div'); bank.className='bank';
+      choices.forEach(opt=>{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=String(opt); chip.onclick=()=>{const inputs=Array.from(document.querySelectorAll('.blank-input')); const target=inputs.find(x=>!x.value); if(target){target.value=String(opt); target.focus();}}; bank.append(chip);});
+      extras.append(bank);
+    }
+    setMeta(q);
+  }
+
+  function renderMCQ(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const box=document.createElement('div'); box.className='choices'; body.append(box);
+    (q.選択肢||[]).forEach((opt,i)=>{const id='opt_'+i; const lbl=document.createElement('label'); const inp=document.createElement('input'); inp.type='radio'; inp.name='mcq'; inp.value=String(opt); inp.id=id; const txt=document.createElement('span'); txt.textContent=String(opt); lbl.append(inp,txt); box.append(lbl);});
+    setMeta(q);
+  }
+  function renderTF(q){ renderMCQ(q); }
+
+  function renderShort(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const el=document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer'; el.placeholder='ここに解答を入力'; body.append(el);
+    setMeta(q);
+  }
+
+  function renderOrder(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    // 選択肢候補
+    let items = Array.isArray(q.選択肢) ? q.選択肢.slice() : (Array.isArray(q.答え)? q.答え.slice(): []);
+    for(let i=items.length-1;i>0;i++){const j=Math.random()* (i+1) |0; [items[i],items[j]]=[items[j],items[i]];}
+    const ul=document.createElement('ol'); ul.id='order-list';
+    items.forEach(x=>{
+      const li=document.createElement('li'); li.textContent=String(x);
+      const btns=document.createElement('span'); btns.style.marginLeft='8px';
+      const up=document.createElement('button'); up.type='button'; up.textContent='↑'; up.onclick=()=>{ if(li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling); };
+      const dn=document.createElement('button'); dn.type='button'; dn.textContent='↓'; dn.onclick=()=>{ if(li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li); };
+      btns.append(up, dn); li.append(btns); ul.append(li);
+    });
+    body.append(ul); setMeta(q);
+  }
+
+  function renderQuestion(q){
+    setProgress();
+    if(q.形式==='fill') return renderFill(q);
+    if(q.形式==='mcq') return renderMCQ(q);
+    if(q.形式==='truefalse') return renderTF(q);
+    if(q.形式==='short') return renderShort(q);
+    if(q.形式==='order') return renderOrder(q);
+    document.getElementById('question-body').textContent=q.問題文||'';
+  }
+
+  /* ====== 採点 ====== */
+  function isCorrectForBlank(user, spec){
+    // spec が配列なら OR、文字列なら完全一致（正規化）
+    if(Array.isArray(spec)) return spec.some(a=>norm(a)===norm(user));
+    // "A / B" を OR と見なす（データゆらぎ対策）
+    if(typeof spec==='string' && spec.includes(' / ')){
+      return spec.split(' / ').some(a=>norm(a)===norm(user));
+    }
+    return norm(spec)===norm(user);
+  }
+
+  function gradeFill(q){
+    const n=countBlanks(q.問題文||'', q.答え);
+    const inputs=Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex)-(+b.dataset.blankIndex));
+    const user=inputs.map(el=>('value' in el)? el.value : el.options[el.selectedIndex]?.value ?? '');
+    const ans=Array.isArray(q.答え)? q.答え : [q.答え??''];
+    const per=[]; for(let i=0;i<n;i++){
+      const spec = ans[i]??'';
+      per[i]=isCorrectForBlank(user[i], spec);
+      inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336';
+    }
+    const correct=per.every(Boolean);
+    const res=document.getElementById('result');
+    const answerView = ans.map((a,i)=> Array.isArray(a)? `(${i+1}) ${a.join(' / ')}` : `(${i+1}) ${a??''}`).join('　');
+    res.className = correct ? 'result-ok' : 'result-ng';
+    res.textContent = (correct? '正解！' : '不正解…') + (answerView? `　正解：${answerView}` : '');
+    return { correct, user, answer: ans, per };
+  }
+
+  function gradeMCQ(q){
+    const checked=document.querySelector('input[name="mcq"]:checked');
+    const ok=checked && norm(checked.value)===norm(q.答え);
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　正解：${q.答え}` : '');
+    return { correct: !!ok, user: checked? checked.value : '', answer: q.答え };
+  }
+
+  function gradeShort(q){
+    const v=document.getElementById('short-answer')?.value||'';
+    // 短答は配列なら OR、文字列なら完全一致（正規化）
+    const ansArr = Array.isArray(q.答え) ? q.答え : (typeof q.答え==='string' ? q.答え.split(/\s*\/\s*|\n/).filter(Boolean) : []);
+    const ok = ansArr.length ? ansArr.some(a=>norm(a)===norm(v)) : norm(v)===norm(q.答え||'');
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　模範解答：${Array.isArray(q.答え)? q.答え.join(' / ') : q.答え}` : '');
+    return { correct: ok, user: v, answer: q.答え };
+  }
+
+  function gradeOrder(q){
+    const lis=Array.from(document.querySelectorAll('#order-list li'));
+    const userSeq=lis.map(li=>li.childNodes[0].textContent.trim()); // exclude buttons text
+    let ansSeq=[];
+    if(Array.isArray(q.答え)) ansSeq=q.答え.map(String);
+    else if(typeof q.答え==='string'){
+      const parsed = tryParseJsonStringMaybeArray(q.答え);
+      if (Array.isArray(parsed)) ansSeq = parsed.map(String);
+      else ansSeq=q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
+    }
+    const ok=ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (ansSeq.length? `　正解順：${ansSeq.join(' → ')}` : '');
+    return { correct: ok, user: userSeq, answer: ansSeq };
+  }
+
+  function gradeCurrent(){
+    const q = QUESTIONS[IDX]; if(!q) return;
+    let g;
+    if(q.形式==='fill') g=gradeFill(q);
+    else if(q.形式==='mcq' || q.形式==='truefalse') g=gradeMCQ(q);
+    else if(q.形式==='short') g=gradeShort(q);
+    else if(q.形式==='order') g=gradeOrder(q);
+    else g={correct:false, user:'', answer:''};
+    attempted++; if(g.correct) correctCount++; updateScoreboard();
+    history.push({ id:q.id, correct:g.correct, user:g.user, answer:g.answer, subject:q.科目, form:q.形式 });
+  }
+
+  /* ====== フロー制御 ====== */
+  function show(i){ IDX=i; const q=QUESTIONS[IDX]; renderQuestion(q); }
+  function startQuiz(){
+    const sel = document.getElementById('subjectSelect').value;
+    const count = Math.max(1, parseInt(document.getElementById('countInput').value||'20',10));
+    const doShuffle = document.getElementById('shuffle').checked;
+    let pool = ALL.filter(q=> !sel || (q.科目===sel));
+    if (doShuffle) pool = pool.sort(()=>Math.random()-0.5);
+    QUESTIONS = pool.slice(0, count);
+    IDX=0; correctCount=0; attempted=0; history=[];
+    updateScoreboard(); setProgress();
+    if(QUESTIONS.length===0){
+      document.getElementById('question-body').textContent='該当する問題が見つかりません。設定を見直してください。';
+      return;
+    }
+    show(0);
+    document.getElementById('final').style.display='none';
+  }
+  function finish(){
+    const total = QUESTIONS.length;
+    const rate = total? Math.round(100*correctCount/total):0;
+    const final = document.getElementById('final');
+    const sum = document.getElementById('finalSummary');
+    const list = document.getElementById('finalList');
+    sum.textContent = `正答：${correctCount} / ${total}（${rate}%）`;
+    list.innerHTML='';
+    history.forEach((h,i)=>{
+      if(!h.correct){
+        const li=document.createElement('li');
+        li.textContent = `Q${i+1}（${h.id}）：あなたの回答 → ${Array.isArray(h.user)? h.user.join(' / ') : h.user}｜正解 → ${Array.isArray(h.answer)? h.answer.join(' / ') : h.answer}`;
+        list.append(li);
+      }
+    });
+    final.style.display='block';
+  }
+
+  document.getElementById('startBtn').onclick = startQuiz;
+  document.getElementById('submit').onclick = gradeCurrent;
+  document.getElementById('next').onclick = () => { if (IDX+1 < QUESTIONS.length) { show(IDX+1); } else { finish(); } };
+
+  /* ====== データロード（questions.json） ====== */
+  async function loadQuestionsJson(){
+    const url = 'questions.json'; // 同階層想定
+    try{
+      const r = await fetch(url, {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      return data;
+    }catch(e){
+      // 代替候補（/data/ も試す）
+      const alt = ['data/questions.json','./data/questions.json','./questions.json'];
+      for(const u of alt){
+        try{
+          const r2 = await fetch(u, {cache:'no-store'});
+          if(r2.ok){ return await r2.json(); }
+        }catch(_){}
+      }
+      throw e;
     }
   }
-  
-  attempted++;
-  history.push({id: q.id, correct, user: userAnswer, answer: q.答え});
-  updateScoreboard();
-  
-  els.submit.style.display = 'none';
-  els.next.style.display = 'inline-block';
-}
 
-function nextQuestion(){
-  IDX++;
-  if(IDX < QUESTIONS.length){
-    renderQuestion(QUESTIONS[IDX]);
-    updateProgress();
-  }else{
-    finishQuiz();
-  }
-}
-
-function finishQuiz(){
-  els.qbody.innerHTML = '';
-  els.extras.innerHTML = '';
-  els.result.innerHTML = '';
-  els.controls.style.display = 'none';
-  
-  const total = QUESTIONS.length;
-  const wrongCount = total - correctCount;
-  els.finalSummary.textContent = `${total}問中、${correctCount}問正解です。間違えた問題は${wrongCount}問でした。`;
-  
-  els.finalList.innerHTML = '';
-  history.forEach((h, i)=>{
-    if(!h.correct){
-      const li=document.createElement('li');
-      li.textContent = `Q${i+1}（${h.id}）：あなたの回答 → ${Array.isArray(h.user)? h.user.join(' / ') : h.user}｜正解 → ${Array.isArray(h.answer)? h.answer.join(' / ') : h.answer}`;
-      els.finalList.append(li);
-    }
+  loadQuestionsJson().then(data=>{
+    ALL = normalizeQuestions(data);
+    buildSubjects();
+    document.getElementById('question-body').innerHTML = '<small class="muted">データ読込済み。設定を選んで開始してください。</small>';
+  }).catch(err=>{
+    console.error(err);
+    document.getElementById('alert').textContent = 'questions.json が読み込めません。ファイルの配置を確認してください。';
+    document.getElementById('question-body').textContent='';
   });
-  els.final.style.display='block';
-  scrollIntoViewSmooth(els.final);
-}
-
-function updateScoreboard(){
-  els.scoreText.textContent = `${correctCount} / ${attempted}`;
-  const rate = attempted > 0 ? Math.floor((correctCount/attempted)*100) : 0;
-  els.scoreRate.textContent = `${rate}%`;
-  els.scoreFill.style.width = `${rate}%`;
-}
-
-function updateProgress(){
-  const progressText = `現在の進捗: ${IDX + 1} / ${QUESTIONS.length}`;
-  els.progress.textContent = progressText;
-}
-
-function startQuiz(){
-  const count = parseInt(els.count.value, 10) || 20;
-  const subject = els.subject.value;
-  let questions = ALL;
-
-  if (subject) {
-    questions = questions.filter(q => q.科目 === subject);
-  }
-
-  if (els.shuffle.checked) {
-    questions.sort(() => Math.random() - 0.5);
-  }
-
-  QUESTIONS = questions.slice(0, count);
-  if(QUESTIONS.length === 0){
-    els.alert.textContent = '該当する問題が見つかりませんでした。';
-    return;
-  }else{
-    els.alert.textContent = '';
-  }
-
-  IDX = 0;
-  correctCount = 0;
-  attempted = 0;
-  history = [];
-
-  els.settings.style.display = 'none';
-  els.final.style.display = 'none';
-  els.controls.style.display = 'flex';
-  
-  renderQuestion(QUESTIONS[IDX]);
-  updateScoreboard();
-  updateProgress();
-}
-
-function toggleExplain(){
-  els.explain.classList.toggle('open');
-}
-
-els.submit.addEventListener('click', checkAnswer);
-els.next.addEventListener('click', nextQuestion);
-els.start.addEventListener('click', startQuiz);
-els.revealExplain.addEventListener('click', toggleExplain);
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && els.submit.style.display !== 'none') {
-    checkAnswer();
-  } else if (e.key === 'n' && els.next.style.display !== 'none') {
-    nextQuestion();
-  }
-});
-
-/* ====== データ読み込み（questions.json 優先） ====== */
-function buildSubjects(){
-  const subs=[...new Set(ALL.map(q=> (q.科目 && String(q.科目).trim()) ? String(q.科目).trim() : '未分類'))].sort();
-  els.subject.innerHTML = '<option value="">すべて</option>' + subs.map(s=>`<option value="${s}">${s}</option>`).join('');
-}
-async function loadQuestionsJson(){
-  const urls = ['questions.json','./questions.json','data/questions.json','./data/questions.json'];
-  for(const url of urls){
-    try{ const r=await fetch(url,{cache:'no-store'}); if(r.ok){ return await r.json(); } }catch(_){}}
-  throw new Error('questions.json not found');
-}
-loadQuestionsJson().then(data=>{
-  ALL = normalizeQuestions(data);
-  buildSubjects();
-  els.qbody.innerHTML = `<small class="muted">データ読込完了。設定を選んで「開始」を押してください。</small>`;
-}).catch(err=>{
-  els.qbody.innerHTML = `<small class="muted">questions.json の読込に失敗しました: ${err.message}</small>`;
-  els.start.disabled = true;
-});
-
-// Drag and Drop (Order Question)
-function allowDrop(e){e.preventDefault();}
-function drag(e){e.dataTransfer.setData("text", e.target.dataset.idx);}
-function drop(e){
-  e.preventDefault();
-  const data = e.dataTransfer.getData("text");
-  const chip = document.querySelector(`.chip[data-idx="${data}"]`);
-  e.target.appendChild(chip);
-}
-
-// Smooth scrolling
-function scrollIntoViewSmooth(el){
-  el.scrollIntoView({behavior: 'smooth'});
-}
 </script>
 </body>
 </html>
