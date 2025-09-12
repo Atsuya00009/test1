@@ -3,35 +3,228 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>問題トレーナー（questions.json対応）</title>
+<title>問題トレーナー（Dior風）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
 <style>
-:root { --ok:#2e7d32; --ng:#c62828; --muted:#666; --ink:#222; --chip:#eef; --chipfg:#225; }
+:root {
+  --ok: #79c98a;
+  --ng: #e07b89;
+  --muted: #8d7a8d;
+  --ink: #3c3c3c;
+  --chip: #f4d8e5;
+  --chipfg: #694155;
+  --bg-color: #f9f5f6;
+  --card-bg: #fff;
+  --border-color: #f1e9f1;
+  --pink-accent: #e996b1;
+  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop { 0% { transform: scale(0.9); } 80% { transform: scale(1.05); } 100% { transform: scale(1); } }
 *{box-sizing:border-box}
-body { margin: 24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; color:var(--ink) }
-header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
-h1 { font-size:1.25rem; margin:0; }
-.pill { display:inline-block; padding:2px 8px; border-radius:999px; background:var(--chip); color:var(--chipfg); font-size:.8rem; margin-left:8px; }
-#settings { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin: 8px 0 16px; }
-#settings label { font-size:.9rem; color:#333; display:flex; flex-direction:column; gap:4px; }
-#settings input[type="number"]{ width:7em; }
-#question-body { padding: 16px; background:#fafafa; border:1px solid #eee; border-radius:8px; line-height:1.9; }
-.blank-input { margin: 0 6px; padding: 6px 8px; font-size: 1rem; min-width:10em }
-.bank { margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap; }
-.bank .chip { border:1px solid #ccc; padding:4px 8px; border-radius:999px; cursor:pointer; background:#fff }
-.choices { margin-top: 12px; display:grid; gap:8px; }
-.choices label { display:flex; align-items:center; gap:8px; padding: 6px 8px; border:1px solid #ddd; border-radius:6px; cursor:pointer; background:#fff }
-.controls { margin-top: 16px; display:flex; gap:8px; flex-wrap:wrap; }
-button { padding:8px 12px; font-size:1rem; cursor:pointer; }
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  color: var(--ink);
+  background-color: var(--bg-color);
+  background-image: repeating-linear-gradient(135deg, #f7f3f4 0 10px, transparent 0 20px, #f2eff0 20px 30px, transparent 30px 40px),
+                    repeating-linear-gradient(45deg, #f7f3f4 0 10px, transparent 0 20px, #f2eff0 20px 30px, transparent 30px 40px),
+                    repeating-linear-gradient(-45deg, #f7f3f4 0 10px, transparent 0 20px, #f2eff0 20px 30px, transparent 30px 40px),
+                    repeating-linear-gradient(-135deg, #f7f3f4 0 10px, transparent 0 20px, #f2eff0 20px 30px, transparent 30px 40px);
+  background-size: 80px 80px;
+  animation: fadeIn 0.5s ease-out;
+}
+header {
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:center;
+  margin-bottom:16px;
+  animation: fadeIn 0.5s ease-out 0.1s both;
+}
+h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size:1.8rem;
+  margin:0;
+  font-weight: 500;
+  color: var(--pink-accent);
+}
+.pill {
+  display:inline-block;
+  padding:4px 12px;
+  border-radius:999px;
+  background:var(--chip);
+  color:var(--chipfg);
+  font-size:.8rem;
+  font-weight: 500;
+}
+#settings {
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+  align-items:end;
+  margin: 8px 0 16px;
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius:12px;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.5s ease-out 0.2s both;
+}
+#settings label {
+  font-size:.9rem;
+  color: var(--ink);
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+#settings input[type="number"], #settings select {
+  width:8em;
+  padding:8px;
+  border:1px solid var(--border-color);
+  border-radius:6px;
+  background-color: var(--card-bg);
+  color: var(--ink);
+}
+#question-body {
+  padding: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius:12px;
+  line-height:1.9;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.5s ease-out 0.3s both;
+}
+.blank-input {
+  margin: 0 6px;
+  padding: 6px 8px;
+  font-size: 1rem;
+  min-width:10em;
+  border: 1px solid var(--border-color);
+  border-radius:6px;
+}
+.blank-input:focus {
+  outline: none;
+  border-color: var(--pink-accent);
+  box-shadow: 0 0 0 2px rgba(233, 150, 177, 0.3);
+}
+.bank {
+  margin-top: 12px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.bank .chip {
+  border:1px solid var(--border-color);
+  padding:6px 12px;
+  border-radius:999px;
+  cursor:pointer;
+  background:#fff;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.bank .chip:hover {
+  background: var(--chip);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.choices {
+  margin-top: 16px;
+  display:grid;
+  gap:12px;
+}
+.choices label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 8px 12px;
+  border:1px solid var(--border-color);
+  border-radius:8px;
+  cursor:pointer;
+  background:var(--card-bg);
+  transition: all 0.2s ease-in-out;
+}
+.choices label:hover {
+  border-color: var(--pink-accent);
+}
+.choices input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: var(--pink-accent);
+}
+.controls {
+  margin-top: 20px;
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  animation: fadeIn 0.5s ease-out 0.4s both;
+}
+button {
+  padding:10px 18px;
+  font-size:1rem;
+  cursor:pointer;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--pink-accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease-in-out;
+}
+button:hover {
+  background-color: #d8819c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
 #meta { color: var(--muted); font-size:.9rem; margin-left: 8px; }
-#progress { font-weight:600; }
-#result { margin-top: 8px; font-weight:600; }
+#progress { font-weight:600; color: var(--ink); }
+#result { margin-top: 8px; font-weight:600; animation: pop 0.4s ease-out; }
 .result-ok { color: var(--ok); }
 .result-ng { color: var(--ng); }
-#scoreboard { margin-top: 12px; color:#333; font-size:.95rem; display:flex; align-items:center; gap: 12px; flex-wrap:wrap;}
-#scoreboard .bar { position:relative; flex: 1 1 220px; height:10px; background:#eee; border-radius:999px; overflow:hidden; }
-#scoreboard .bar > i { position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, #66bb6a, #43a047); }
-#final { display:none; margin-top:18px; padding:12px; border:1px dashed #ccc; border-radius:8px; background:#fcfcfc; }
-#final h2 { margin: 0 0 8px; font-size:1.1rem; }
+#scoreboard {
+  margin-top: 16px;
+  color:#333;
+  font-size:.95rem;
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  flex-wrap:wrap;
+}
+#scoreboard .bar {
+  position:relative;
+  flex: 1 1 220px;
+  height:12px;
+  background:#f1e9f1;
+  border-radius:999px;
+  overflow:hidden;
+}
+#scoreboard .bar > i {
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:0%;
+  background:linear-gradient(90deg, #99d2a4, #79c98a);
+  transition: width 0.5s ease-in-out;
+}
+#final {
+  display:none;
+  margin-top:24px;
+  padding:20px;
+  border:1px dashed var(--border-color);
+  border-radius:12px;
+  background:#fdfcfd;
+  animation: fadeIn 0.5s ease-out 0.5s both;
+}
+#final h2 {
+  font-family: 'Cormorant Garamond', serif;
+  margin: 0 0 8px;
+  font-size:1.4rem;
+  font-weight: 500;
+  color: var(--pink-accent);
+}
 #final ul { padding-left: 1.25rem; }
 #alert { margin-left: 8px; color: #b71c1c; font-weight: 600; }
 small.muted{ color:var(--muted) }
@@ -39,364 +232,364 @@ small.muted{ color:var(--muted) }
 </head>
 <body>
 <header>
-  <h1>問題トレーナー</h1>
-  <span id="meta"></span>
-  <span id="alert"></span>
-  <span class="pill">データ: <b>questions.json</b> を自動読込</span>
+  <h1>問題トレーナー</h1>
+  <span id="meta"></span>
+  <span id="alert"></span>
+  <span class="pill">データ: <b>questions.json</b> を自動読込</span>
 </header>
 
 <section id="settings">
-  <label>科目
-    <select id="subjectSelect">
-      <option value="">すべて</option>
-    </select>
-  </label>
-  <label>問題数
-    <input type="number" id="countInput" min="1" value="20">
-  </label>
-  <label><input type="checkbox" id="shuffle" checked> ランダム</label>
-  <button id="startBtn">この設定で開始</button>
-  <span id="progress"></span>
+  <label>科目
+    <select id="subjectSelect">
+      <option value="">すべて</option>
+    </select>
+  </label>
+  <label>問題数
+    <input type="number" id="countInput" min="1" value="20">
+  </label>
+  <label><input type="checkbox" id="shuffle" checked> ランダム</label>
+  <button id="startBtn">この設定で開始</button>
+  <span id="progress"></span>
 </section>
 
 <main>
-  <div id="question-body"><small class="muted">questions.json の読み込みを待機中…</small></div>
-  <div id="extras"></div>
-  <div id="result"></div>
+  <div id="question-body"><small class="muted">questions.json の読み込みを待機中…</small></div>
+  <div id="extras"></div>
+  <div id="result"></div>
 
-  <div id="scoreboard">
-    <span>スコア：<b id="scoreText">0 / 0</b>（<b id="scoreRate">0%</b>）</span>
-    <div class="bar"><i id="scoreFill"></i></div>
-  </div>
+  <div id="scoreboard">
+    <span>スコア：<b id="scoreText">0 / 0</b>（<b id="scoreRate">0%</b>）</span>
+    <div class="bar"><i id="scoreFill"></i></div>
+  </div>
 
-  <div class="controls">
-    <button id="submit">採点</button>
-    <button id="next">次の問題 ▶</button>
-  </div>
+  <div class="controls">
+    <button id="submit">採点</button>
+    <button id="next">次の問題 ▶</button>
+  </div>
 
-  <section id="final">
-    <h2>結果</h2>
-    <p id="finalSummary"></p>
-    <ul id="finalList"></ul>
-  </section>
+  <section id="final">
+    <h2>結果</h2>
+    <p id="finalSummary"></p>
+    <ul id="finalList"></ul>
+  </section>
 </main>
 
 <script>
-  let ALL = [];
-  let QUESTIONS = [];
-  let IDX = 0, correctCount = 0, attempted = 0;
-  let history = [];
+  let ALL = [];
+  let QUESTIONS = [];
+  let IDX = 0, correctCount = 0, attempted = 0;
+  let history = [];
 
-  /* ====== 正規化・ユーティリティ ====== */
-  const FORM_MAP = {
-    '穴埋め':'fill','fill':'fill',
-    '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
-    '並べ替え':'order','並べ替え問題':'order','order':'order',
-    '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
-    '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'
-  };
-  function normalizeForm(s){ return FORM_MAP[s] || s; }
+  /* ====== 正規化・ユーティリティ ====== */
+  const FORM_MAP = {
+    '穴埋め':'fill','fill':'fill',
+    '〇×':'truefalse','○×':'truefalse','truefalse':'truefalse',
+    '並べ替え':'order','並べ替え問題':'order','order':'order',
+    '５択':'mcq','5択':'mcq','選択':'mcq','multi':'mcq','mcq':'mcq',
+    '書き換え':'short','記述':'short','written':'short','rewrite':'short','short':'short'
+  };
+  function normalizeForm(s){ return FORM_MAP[s] || s; }
 
-  function tryParseJsonStringMaybeArray(x){
-    // some data has '["〇","×"]' as a string; parse safely
-    if (typeof x === 'string'){
-      const t = x.trim();
-      if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('{') && t.endsWith('}'))){
-        try{ return JSON.parse(t); }catch(e){ return x; }
-      }
-      // also allow "['a','b']" → convert to JSON-ish
-      if (t.startsWith("['") || t.startsWith('["')){
-        try{
-          const j = t.replace(/'/g, '"');
-          return JSON.parse(j);
-        }catch(e){ return x; }
-      }
-    }
-    return x;
-  }
+  function tryParseJsonStringMaybeArray(x){
+    // some data has '["〇","×"]' as a string; parse safely
+    if (typeof x === 'string'){
+      const t = x.trim();
+      if ((t.startsWith('[') && t.endsWith(']')) || (t.startsWith('{') && t.endsWith('}'))){
+        try{ return JSON.parse(t); }catch(e){ return x; }
+      }
+      // also allow "['a','b']" → convert to JSON-ish
+      if (t.startsWith("['") || t.startsWith('["')){
+        try{
+          const j = t.replace(/'/g, '"');
+          return JSON.parse(j);
+        }catch(e){ return x; }
+      }
+    }
+    return x;
+  }
 
-  function normalizeQuestions(arr){
-    return arr.map(q=>{
-      const out = { ...q };
-      out.形式 = normalizeForm(String(out.形式||'').trim());
-      // normalize 選択肢：stringified array → array
-      if ('選択肢' in out){
-        const parsed = tryParseJsonStringMaybeArray(out.選択肢);
-        out.選択肢 = parsed;
-        // some data has ["[\"〇\", \"×\"]"] (array with one JSON-string)
-        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
-          const p2 = tryParseJsonStringMaybeArray(out.選択肢[0]);
-          if (Array.isArray(p2)) out.選択肢 = p2;
-        }
-      }
-      // truefalse: default choices
-      if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
-        out.選択肢 = ['〇','×'];
-      }
-      // order: 答えや選択肢が文字列化JSONのことがある
-      if(out.形式==='order'){
-        out.答え = tryParseJsonStringMaybeArray(out.答え);
-        out.選択肢 = tryParseJsonStringMaybeArray(out.選択肢);
-        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
-          const p = tryParseJsonStringMaybeArray(out.選択肢[0]);
-          if (Array.isArray(p)) out.選択肢 = p;
-        }
-      }
-      // fill: 答えは配列に
-      if(out.形式==='fill'){
-        if(Array.isArray(out.答え)){
-          // ok
-        }else if(typeof out.答え==='string' && out.答え.trim()){
-          // "A / B / C" で分割、改行も区切りとして解釈
-          const parts = out.答え.split(/\s*\/\s*|\n/).map(s=>s.trim()).filter(Boolean);
-          out.答え = parts.length>1 ? parts : [out.答え.trim()];
-        }else{
-          out.答え = [];
-        }
-      }
-      // 科目欠落補正
-      if(!out.科目 || (typeof out.科目==='string' && out.科目.trim()==='')) out.科目 = '未分類';
-      return out;
-    });
-  }
+  function normalizeQuestions(arr){
+    return arr.map(q=>{
+      const out = { ...q };
+      out.形式 = normalizeForm(String(out.形式||'').trim());
+      // normalize 選択肢：stringified array → array
+      if ('選択肢' in out){
+        const parsed = tryParseJsonStringMaybeArray(out.選択肢);
+        out.選択肢 = parsed;
+        // some data has ["[\"〇\", \"×\"]"] (array with one JSON-string)
+        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
+          const p2 = tryParseJsonStringMaybeArray(out.選択肢[0]);
+          if (Array.isArray(p2)) out.選択肢 = p2;
+        }
+      }
+      // truefalse: default choices
+      if(out.形式==='truefalse' && (!Array.isArray(out.選択肢) || out.選択肢.length===0)){
+        out.選択肢 = ['〇','×'];
+      }
+      // order: 答えや選択肢が文字列化JSONのことがある
+      if(out.形式==='order'){
+        out.答え = tryParseJsonStringMaybeArray(out.答え);
+        out.選択肢 = tryParseJsonStringMaybeArray(out.選択肢);
+        if (Array.isArray(out.選択肢) && out.選択肢.length===1 && typeof out.選択肢[0]==='string'){
+          const p = tryParseJsonStringMaybeArray(out.選択肢[0]);
+          if (Array.isArray(p)) out.選択肢 = p;
+        }
+      }
+      // fill: 答えは配列に
+      if(out.形式==='fill'){
+        if(Array.isArray(out.答え)){
+          // ok
+        }else if(typeof out.答え==='string' && out.答え.trim()){
+          // "A / B / C" で分割、改行も区切りとして解釈
+          const parts = out.答え.split(/\s*\/\s*|\n/).map(s=>s.trim()).filter(Boolean);
+          out.答え = parts.length>1 ? parts : [out.答え.trim()];
+        }else{
+          out.答え = [];
+        }
+      }
+      // 科目欠落補正
+      if(!out.科目 || (typeof out.科目==='string' && out.科目.trim()==='')) out.科目 = '未分類';
+      return out;
+    });
+  }
 
-  function norm(s){return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}
-  function countBlanks(text, answer){
-    const m=(String(text||'').match(/（　　　）/g)||[]).length;
-    if(m>0) return m;
-    if(Array.isArray(answer)) return answer.length||1;
-    return 1;
-  }
+  function norm(s){return String(s??'').trim().normalize('NFKC').replace(/\s+/g,'');}
+  function countBlanks(text, answer){
+    const m=(String(text||'').match(/（　　　）/g)||[]).length;
+    if(m>0) return m;
+    if(Array.isArray(answer)) return answer.length||1;
+    return 1;
+  }
 
-  function buildSubjects(){
-    const subs=[...new Set(ALL.map(q=> (q.科目 && String(q.科目).trim()) ? String(q.科目).trim() : '未分類'))].sort();
-    const sel=document.getElementById('subjectSelect');
-    sel.innerHTML = '<option value=\"\">すべて</option>' + subs.map(s=>`<option value=\"${s}\">${s}</option>`).join('');
-  }
+  function buildSubjects(){
+    const subs=[...new Set(ALL.map(q=> (q.科目 && String(q.科目).trim()) ? String(q.科目).trim() : '未分類'))].sort();
+    const sel=document.getElementById('subjectSelect');
+    sel.innerHTML = '<option value=\"\">すべて</option>' + subs.map(s=>`<option value=\"${s}\">${s}</option>`).join('');
+  }
 
-  function setProgress(){document.getElementById('progress').textContent = QUESTIONS.length? `Q ${IDX+1} / ${QUESTIONS.length}` : '';}
-  function setMeta(q){document.getElementById('meta').textContent = `${q.id||''} ${q.科目? ' / '+q.科目 : ''}`; }
-  function updateScoreboard(){
-    const total = attempted; const rate = total? Math.round(100*correctCount/total):0;
-    document.getElementById('scoreText').textContent = `${correctCount} / ${total}`;
-    document.getElementById('scoreRate').textContent = rate + '%';
-    document.getElementById('scoreFill').style.width = rate + '%';
-  }
+  function setProgress(){document.getElementById('progress').textContent = QUESTIONS.length? `Q ${IDX+1} / ${QUESTIONS.length}` : '';}
+  function setMeta(q){document.getElementById('meta').textContent = `${q.id||''} ${q.科目? ' / '+q.科目 : ''}`; }
+  function updateScoreboard(){
+    const total = attempted; const rate = total? Math.round(100*correctCount/total):0;
+    document.getElementById('scoreText').textContent = `${correctCount} / ${total}`;
+    document.getElementById('scoreRate').textContent = rate + '%';
+    document.getElementById('scoreFill').style.width = rate + '%';
+  }
 
-  /* ====== レンダリング ====== */
-  function renderFill(q){
-    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
-    body.innerHTML=extras.innerHTML=result.innerHTML='';
-    const n=countBlanks(q.問題文||'', q.答え);
-    const parts=String(q.問題文||'').split('（　　　）');
-    const choices=Array.isArray(q.選択肢)?q.選択肢:null;
-    const isPerBlankChoices=Array.isArray(choices)&&Array.isArray(choices[0]);
-    const isBank=Array.isArray(choices)&&!isPerBlankChoices;
-    for(let i=0;i<parts.length;i++){
-      body.append(document.createTextNode(parts[i]));
-      if(i<n){
-        let el;
-        if(isPerBlankChoices){ el=document.createElement('select'); (choices[i]||[]).forEach(opt=>{const o=document.createElement('option'); o.value=String(opt); o.textContent=String(opt); el.appendChild(o);}); }
-        else { el=document.createElement('input'); el.type='text'; el.placeholder=`空欄${i+1}`; el.autocomplete='off'; }
-        el.className='blank-input'; el.dataset.blankIndex=i; body.append(el);
-      }
-    }
-    if(isBank){
-      const bank=document.createElement('div'); bank.className='bank';
-      choices.forEach(opt=>{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=String(opt); chip.onclick=()=>{const inputs=Array.from(document.querySelectorAll('.blank-input')); const target=inputs.find(x=>!x.value); if(target){target.value=String(opt); target.focus();}}; bank.append(chip);});
-      extras.append(bank);
-    }
-    setMeta(q);
-  }
+  /* ====== レンダリング ====== */
+  function renderFill(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const n=countBlanks(q.問題文||'', q.答え);
+    const parts=String(q.問題文||'').split('（　　　）');
+    const choices=Array.isArray(q.選択肢)?q.選択肢:null;
+    const isPerBlankChoices=Array.isArray(choices)&&Array.isArray(choices[0]);
+    const isBank=Array.isArray(choices)&&!isPerBlankChoices;
+    for(let i=0;i<parts.length;i++){
+      body.append(document.createTextNode(parts[i]));
+      if(i<n){
+        let el;
+        if(isPerBlankChoices){ el=document.createElement('select'); (choices[i]||[]).forEach(opt=>{const o=document.createElement('option'); o.value=String(opt); o.textContent=String(opt); el.appendChild(o);}); }
+        else { el=document.createElement('input'); el.type='text'; el.placeholder=`空欄${i+1}`; el.autocomplete='off'; }
+        el.className='blank-input'; el.dataset.blankIndex=i; body.append(el);
+      }
+    }
+    if(isBank){
+      const bank=document.createElement('div'); bank.className='bank';
+      choices.forEach(opt=>{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=String(opt); chip.onclick=()=>{const inputs=Array.from(document.querySelectorAll('.blank-input')); const target=inputs.find(x=>!x.value); if(target){target.value=String(opt); target.focus();}}; bank.append(chip);});
+      extras.append(bank);
+    }
+    setMeta(q);
+  }
 
-  function renderMCQ(q){
-    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
-    body.innerHTML=extras.innerHTML=result.innerHTML='';
-    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
-    const box=document.createElement('div'); box.className='choices'; body.append(box);
-    (q.選択肢||[]).forEach((opt,i)=>{const id='opt_'+i; const lbl=document.createElement('label'); const inp=document.createElement('input'); inp.type='radio'; inp.name='mcq'; inp.value=String(opt); inp.id=id; const txt=document.createElement('span'); txt.textContent=String(opt); lbl.append(inp,txt); box.append(lbl);});
-    setMeta(q);
-  }
-  function renderTF(q){ renderMCQ(q); }
+  function renderMCQ(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const box=document.createElement('div'); box.className='choices'; body.append(box);
+    (q.選択肢||[]).forEach((opt,i)=>{const id='opt_'+i; const lbl=document.createElement('label'); const inp=document.createElement('input'); inp.type='radio'; inp.name='mcq'; inp.value=String(opt); inp.id=id; const txt=document.createElement('span'); txt.textContent=String(opt); lbl.append(inp,txt); box.append(lbl);});
+    setMeta(q);
+  }
+  function renderTF(q){ renderMCQ(q); }
 
-  function renderShort(q){
-    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
-    body.innerHTML=extras.innerHTML=result.innerHTML='';
-    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
-    const el=document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer'; el.placeholder='ここに解答を入力'; body.append(el);
-    setMeta(q);
-  }
+  function renderShort(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    const el=document.createElement('textarea'); el.rows=3; el.style.width='100%'; el.id='short-answer'; el.placeholder='ここに解答を入力'; body.append(el);
+    setMeta(q);
+  }
 
-  function renderOrder(q){
-    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
-    body.innerHTML=extras.innerHTML=result.innerHTML='';
-    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
-    // 選択肢候補
-    let items = Array.isArray(q.選択肢) ? q.選択肢.slice() : (Array.isArray(q.答え)? q.答え.slice(): []);
-    for(let i=items.length-1;i>0;i++){const j=Math.random()* (i+1) |0; [items[i],items[j]]=[items[j],items[i]];}
-    const ul=document.createElement('ol'); ul.id='order-list';
-    items.forEach(x=>{
-      const li=document.createElement('li'); li.textContent=String(x);
-      const btns=document.createElement('span'); btns.style.marginLeft='8px';
-      const up=document.createElement('button'); up.type='button'; up.textContent='↑'; up.onclick=()=>{ if(li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling); };
-      const dn=document.createElement('button'); dn.type='button'; dn.textContent='↓'; dn.onclick=()=>{ if(li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li); };
-      btns.append(up, dn); li.append(btns); ul.append(li);
-    });
-    body.append(ul); setMeta(q);
-  }
+  function renderOrder(q){
+    const body=document.getElementById('question-body'), extras=document.getElementById('extras'), result=document.getElementById('result');
+    body.innerHTML=extras.innerHTML=result.innerHTML='';
+    const stem=document.createElement('div'); stem.textContent=q.問題文||''; body.append(stem);
+    // 選択肢候補
+    let items = Array.isArray(q.選択肢) ? q.選択肢.slice() : (Array.isArray(q.答え)? q.答え.slice(): []);
+    for(let i=items.length-1;i>0;i++){const j=Math.random()* (i+1) |0; [items[i],items[j]]=[items[j],items[i]];}
+    const ul=document.createElement('ol'); ul.id='order-list';
+    items.forEach(x=>{
+      const li=document.createElement('li'); li.textContent=String(x);
+      const btns=document.createElement('span'); btns.style.marginLeft='8px';
+      const up=document.createElement('button'); up.type='button'; up.textContent='↑'; up.onclick=()=>{ if(li.previousElementSibling) ul.insertBefore(li, li.previousElementSibling); };
+      const dn=document.createElement('button'); dn.type='button'; dn.textContent='↓'; dn.onclick=()=>{ if(li.nextElementSibling) ul.insertBefore(li.nextElementSibling, li); };
+      btns.append(up, dn); li.append(btns); ul.append(li);
+    });
+    body.append(ul); setMeta(q);
+  }
 
-  function renderQuestion(q){
-    setProgress();
-    if(q.形式==='fill') return renderFill(q);
-    if(q.形式==='mcq') return renderMCQ(q);
-    if(q.形式==='truefalse') return renderTF(q);
-    if(q.形式==='short') return renderShort(q);
-    if(q.形式==='order') return renderOrder(q);
-    document.getElementById('question-body').textContent=q.問題文||'';
-  }
+  function renderQuestion(q){
+    setProgress();
+    if(q.形式==='fill') return renderFill(q);
+    if(q.形式==='mcq') return renderMCQ(q);
+    if(q.形式==='truefalse') return renderTF(q);
+    if(q.形式==='short') return renderShort(q);
+    if(q.形式==='order') return renderOrder(q);
+    document.getElementById('question-body').textContent=q.問題文||'';
+  }
 
-  /* ====== 採点 ====== */
-  function isCorrectForBlank(user, spec){
-    // spec が配列なら OR、文字列なら完全一致（正規化）
-    if(Array.isArray(spec)) return spec.some(a=>norm(a)===norm(user));
-    // "A / B" を OR と見なす（データゆらぎ対策）
-    if(typeof spec==='string' && spec.includes(' / ')){
-      return spec.split(' / ').some(a=>norm(a)===norm(user));
-    }
-    return norm(spec)===norm(user);
-  }
+  /* ====== 採点 ====== */
+  function isCorrectForBlank(user, spec){
+    // spec が配列なら OR、文字列なら完全一致（正規化）
+    if(Array.isArray(spec)) return spec.some(a=>norm(a)===norm(user));
+    // "A / B" を OR と見なす（データゆらぎ対策）
+    if(typeof spec==='string' && spec.includes(' / ')){
+      return spec.split(' / ').some(a=>norm(a)===norm(user));
+    }
+    return norm(spec)===norm(user);
+  }
 
-  function gradeFill(q){
-    const n=countBlanks(q.問題文||'', q.答え);
-    const inputs=Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex)-(+b.dataset.blankIndex));
-    const user=inputs.map(el=>('value' in el)? el.value : el.options[el.selectedIndex]?.value ?? '');
-    const ans=Array.isArray(q.答え)? q.答え : [q.答え??''];
-    const per=[]; for(let i=0;i<n;i++){
-      const spec = ans[i]??'';
-      per[i]=isCorrectForBlank(user[i], spec);
-      inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336';
-    }
-    const correct=per.every(Boolean);
-    const res=document.getElementById('result');
-    const answerView = ans.map((a,i)=> Array.isArray(a)? `(${i+1}) ${a.join(' / ')}` : `(${i+1}) ${a??''}`).join('　');
-    res.className = correct ? 'result-ok' : 'result-ng';
-    res.textContent = (correct? '正解！' : '不正解…') + (answerView? `　正解：${answerView}` : '');
-    return { correct, user, answer: ans, per };
-  }
+  function gradeFill(q){
+    const n=countBlanks(q.問題文||'', q.答え);
+    const inputs=Array.from(document.querySelectorAll('.blank-input')).sort((a,b)=> (+a.dataset.blankIndex)-(+b.dataset.blankIndex));
+    const user=inputs.map(el=>('value' in el)? el.value : el.options[el.selectedIndex]?.value ?? '');
+    const ans=Array.isArray(q.答え)? q.答え : [q.答え??''];
+    const per=[]; for(let i=0;i<n;i++){
+      const spec = ans[i]??'';
+      per[i]=isCorrectForBlank(user[i], spec);
+      inputs[i].style.borderColor = per[i] ? '#4caf50' : '#f44336';
+    }
+    const correct=per.every(Boolean);
+    const res=document.getElementById('result');
+    const answerView = ans.map((a,i)=> Array.isArray(a)? `(${i+1}) ${a.join(' / ')}` : `(${i+1}) ${a??''}`).join('　');
+    res.className = correct ? 'result-ok' : 'result-ng';
+    res.textContent = (correct? '正解！' : '不正解…') + (answerView? `　正解：${answerView}` : '');
+    return { correct, user, answer: ans, per };
+  }
 
-  function gradeMCQ(q){
-    const checked=document.querySelector('input[name="mcq"]:checked');
-    const ok=checked && norm(checked.value)===norm(q.答え);
-    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　正解：${q.答え}` : '');
-    return { correct: !!ok, user: checked? checked.value : '', answer: q.答え };
-  }
+  function gradeMCQ(q){
+    const checked=document.querySelector('input[name="mcq"]:checked');
+    const ok=checked && norm(checked.value)===norm(q.答え);
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　正解：${q.答え}` : '');
+    return { correct: !!ok, user: checked? checked.value : '', answer: q.答え };
+  }
 
-  function gradeShort(q){
-    const v=document.getElementById('short-answer')?.value||'';
-    // 短答は配列なら OR、文字列なら完全一致（正規化）
-    const ansArr = Array.isArray(q.答え) ? q.答え : (typeof q.答え==='string' ? q.答え.split(/\s*\/\s*|\n/).filter(Boolean) : []);
-    const ok = ansArr.length ? ansArr.some(a=>norm(a)===norm(v)) : norm(v)===norm(q.答え||'');
-    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　模範解答：${Array.isArray(q.答え)? q.答え.join(' / ') : q.答え}` : '');
-    return { correct: ok, user: v, answer: q.答え };
-  }
+  function gradeShort(q){
+    const v=document.getElementById('short-answer')?.value||'';
+    // 短答は配列なら OR、文字列なら完全一致（正規化）
+    const ansArr = Array.isArray(q.答え) ? q.答え : (typeof q.答え==='string' ? q.答え.split(/\s*\/\s*|\n/).filter(Boolean) : []);
+    const ok = ansArr.length ? ansArr.some(a=>norm(a)===norm(v)) : norm(v)===norm(q.答え||'');
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (q.答え? `　模範解答：${Array.isArray(q.答え)? q.答え.join(' / ') : q.答え}` : '');
+    return { correct: ok, user: v, answer: q.答え };
+  }
 
-  function gradeOrder(q){
-    const lis=Array.from(document.querySelectorAll('#order-list li'));
-    const userSeq=lis.map(li=>li.childNodes[0].textContent.trim()); // exclude buttons text
-    let ansSeq=[];
-    if(Array.isArray(q.答え)) ansSeq=q.答え.map(String);
-    else if(typeof q.答え==='string'){
-      const parsed = tryParseJsonStringMaybeArray(q.答え);
-      if (Array.isArray(parsed)) ansSeq = parsed.map(String);
-      else ansSeq=q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
-    }
-    const ok=ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
-    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (ansSeq.length? `　正解順：${ansSeq.join(' → ')}` : '');
-    return { correct: ok, user: userSeq, answer: ansSeq };
-  }
+  function gradeOrder(q){
+    const lis=Array.from(document.querySelectorAll('#order-list li'));
+    const userSeq=lis.map(li=>li.childNodes[0].textContent.trim()); // exclude buttons text
+    let ansSeq=[];
+    if(Array.isArray(q.答え)) ansSeq=q.答え.map(String);
+    else if(typeof q.答え==='string'){
+      const parsed = tryParseJsonStringMaybeArray(q.答え);
+      if (Array.isArray(parsed)) ansSeq = parsed.map(String);
+      else ansSeq=q.答え.split(/[,、]\s*/).map(s=>s.trim()).filter(Boolean);
+    }
+    const ok=ansSeq.length && ansSeq.every((v,i)=> (v===userSeq[i]));
+    const res=document.getElementById('result'); res.className = ok ? 'result-ok' : 'result-ng'; res.textContent = (ok? '正解！' : '不正解…') + (ansSeq.length? `　正解順：${ansSeq.join(' → ')}` : '');
+    return { correct: ok, user: userSeq, answer: ansSeq };
+  }
 
-  function gradeCurrent(){
-    const q = QUESTIONS[IDX]; if(!q) return;
-    let g;
-    if(q.形式==='fill') g=gradeFill(q);
-    else if(q.形式==='mcq' || q.形式==='truefalse') g=gradeMCQ(q);
-    else if(q.形式==='short') g=gradeShort(q);
-    else if(q.形式==='order') g=gradeOrder(q);
-    else g={correct:false, user:'', answer:''};
-    attempted++; if(g.correct) correctCount++; updateScoreboard();
-    history.push({ id:q.id, correct:g.correct, user:g.user, answer:g.answer, subject:q.科目, form:q.形式 });
-  }
+  function gradeCurrent(){
+    const q = QUESTIONS[IDX]; if(!q) return;
+    let g;
+    if(q.形式==='fill') g=gradeFill(q);
+    else if(q.形式==='mcq' || q.形式==='truefalse') g=gradeMCQ(q);
+    else if(q.形式==='short') g=gradeShort(q);
+    else if(q.形式==='order') g=gradeOrder(q);
+    else g={correct:false, user:'', answer:''};
+    attempted++; if(g.correct) correctCount++; updateScoreboard();
+    history.push({ id:q.id, correct:g.correct, user:g.user, answer:g.answer, subject:q.科目, form:q.形式 });
+  }
 
-  /* ====== フロー制御 ====== */
-  function show(i){ IDX=i; const q=QUESTIONS[IDX]; renderQuestion(q); }
-  function startQuiz(){
-    const sel = document.getElementById('subjectSelect').value;
-    const count = Math.max(1, parseInt(document.getElementById('countInput').value||'20',10));
-    const doShuffle = document.getElementById('shuffle').checked;
-    let pool = ALL.filter(q=> !sel || (q.科目===sel));
-    if (doShuffle) pool = pool.sort(()=>Math.random()-0.5);
-    QUESTIONS = pool.slice(0, count);
-    IDX=0; correctCount=0; attempted=0; history=[];
-    updateScoreboard(); setProgress();
-    if(QUESTIONS.length===0){
-      document.getElementById('question-body').textContent='該当する問題が見つかりません。設定を見直してください。';
-      return;
-    }
-    show(0);
-    document.getElementById('final').style.display='none';
-  }
-  function finish(){
-    const total = QUESTIONS.length;
-    const rate = total? Math.round(100*correctCount/total):0;
-    const final = document.getElementById('final');
-    const sum = document.getElementById('finalSummary');
-    const list = document.getElementById('finalList');
-    sum.textContent = `正答：${correctCount} / ${total}（${rate}%）`;
-    list.innerHTML='';
-    history.forEach((h,i)=>{
-      if(!h.correct){
-        const li=document.createElement('li');
-        li.textContent = `Q${i+1}（${h.id}）：あなたの回答 → ${Array.isArray(h.user)? h.user.join(' / ') : h.user}｜正解 → ${Array.isArray(h.answer)? h.answer.join(' / ') : h.answer}`;
-        list.append(li);
-      }
-    });
-    final.style.display='block';
-  }
+  /* ====== フロー制御 ====== */
+  function show(i){ IDX=i; const q=QUESTIONS[IDX]; renderQuestion(q); }
+  function startQuiz(){
+    const sel = document.getElementById('subjectSelect').value;
+    const count = Math.max(1, parseInt(document.getElementById('countInput').value||'20',10));
+    const doShuffle = document.getElementById('shuffle').checked;
+    let pool = ALL.filter(q=> !sel || (q.科目===sel));
+    if (doShuffle) pool = pool.sort(()=>Math.random()-0.5);
+    QUESTIONS = pool.slice(0, count);
+    IDX=0; correctCount=0; attempted=0; history=[];
+    updateScoreboard(); setProgress();
+    if(QUESTIONS.length===0){
+      document.getElementById('question-body').textContent='該当する問題が見つかりません。設定を見直してください。';
+      return;
+    }
+    show(0);
+    document.getElementById('final').style.display='none';
+  }
+  function finish(){
+    const total = QUESTIONS.length;
+    const rate = total? Math.round(100*correctCount/total):0;
+    const final = document.getElementById('final');
+    const sum = document.getElementById('finalSummary');
+    const list = document.getElementById('finalList');
+    sum.textContent = `正答：${correctCount} / ${total}（${rate}%）`;
+    list.innerHTML='';
+    history.forEach((h,i)=>{
+      if(!h.correct){
+        const li=document.createElement('li');
+        li.textContent = `Q${i+1}（${h.id}）：あなたの回答 → ${Array.isArray(h.user)? h.user.join(' / ') : h.user}｜正解 → ${Array.isArray(h.answer)? h.answer.join(' / ') : h.answer}`;
+        list.append(li);
+      }
+    });
+    final.style.display='block';
+  }
 
-  document.getElementById('startBtn').onclick = startQuiz;
-  document.getElementById('submit').onclick = gradeCurrent;
-  document.getElementById('next').onclick = () => { if (IDX+1 < QUESTIONS.length) { show(IDX+1); } else { finish(); } };
+  document.getElementById('startBtn').onclick = startQuiz;
+  document.getElementById('submit').onclick = gradeCurrent;
+  document.getElementById('next').onclick = () => { if (IDX+1 < QUESTIONS.length) { show(IDX+1); } else { finish(); } };
 
-  /* ====== データロード（questions.json） ====== */
-  async function loadQuestionsJson(){
-    const url = 'questions.json'; // 同階層想定
-    try{
-      const r = await fetch(url, {cache:'no-store'});
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
-      return data;
-    }catch(e){
-      // 代替候補（/data/ も試す）
-      const alt = ['data/questions.json','./data/questions.json','./questions.json'];
-      for(const u of alt){
-        try{
-          const r2 = await fetch(u, {cache:'no-store'});
-          if(r2.ok){ return await r2.json(); }
-        }catch(_){}
-      }
-      throw e;
-    }
-  }
+  /* ====== データロード（questions.json） ====== */
+  async function loadQuestionsJson(){
+    const url = 'questions.json'; // 同階層想定
+    try{
+      const r = await fetch(url, {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      return data;
+    }catch(e){
+      // 代替候補（/data/ も試す）
+      const alt = ['data/questions.json','./data/questions.json','./questions.json'];
+      for(const u of alt){
+        try{
+          const r2 = await fetch(u, {cache:'no-store'});
+          if(r2.ok){ return await r2.json(); }
+        }catch(_){}
+      }
+      throw e;
+    }
+  }
 
-  loadQuestionsJson().then(data=>{
-    ALL = normalizeQuestions(data);
-    buildSubjects();
-    document.getElementById('question-body').innerHTML = '<small class="muted">データ読込済み。設定を選んで開始してください。</small>';
-  }).catch(err=>{
-    console.error(err);
-    document.getElementById('alert').textContent = 'questions.json が読み込めません。ファイルの配置を確認してください。';
-    document.getElementById('question-body').textContent='';
-  });
+  loadQuestionsJson().then(data=>{
+    ALL = normalizeQuestions(data);
+    buildSubjects();
+    document.getElementById('question-body').innerHTML = '<small class="muted">データ読込済み。設定を選んで開始してください。</small>';
+  }).catch(err=>{
+    console.error(err);
+    document.getElementById('alert').textContent = 'questions.json が読み込めません。ファイルの配置を確認してください。';
+    document.getElementById('question-body').textContent='';
+  });
 </script>
 </body>
 </html>
